@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Whisper!</title>
+
+    <!-- manifest and favicon stuff -->
+    <link rel="icon" type="image/png" href="/img/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/img/favicon.svg" />
+    <link rel="shortcut icon" href="/img/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Whisper!" />
+    <link rel="manifest" href="/img/site.webmanifest" />
+
+    <!-- https://pure-css.github.io/start/ -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/purecss@3.0.0/build/pure-min.css"
+        integrity="sha384-X38yfunGUhNzHpBaEBsWLO+A0HDYOQi8ufWDkZ0k9e0eXz/tH3II7uKZ9msv++Ls" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/purecss@3.0.0/build/grids-responsive-min.css">
+    <!-- https://pictogrammers.com/docs/guides/iconify/ -->
+    <script src="//code.iconify.design/1/1.0.6/iconify.min.js"></script>
+    <!-- custom styles -->
+    <link rel="stylesheet" href="css/styles.css" />
+    <!-- the whisper ts/js module-->
+    <script type="module" src="dist/whisper.js"></script>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body x-data="$store.whisperState">
+    <div class="pure-menu pure-menu-horizontal" style="text-align:center;">
+        <div>
+            <!-- Whisper name and logo (for others to complain about)-->
+            <img class="pure-menu-heading" src="img/whisper.svg" alt="logo" style="height: 3rem;" />
+            <span>Whisper!</span>
+        </div>
+        </span>
+        <ul class="pure-menu-list">
+            <li class="pure-menu-item">
+                <a href="#" class="pure-menu-link selectable-image-container"
+                    :class="activeScreen == Screen.Send && 'selected'" x-on:click="activeScreen = Screen.Send"><span
+                        class="iconify iconify-button" data-icon="mdi-call-made"></span><br /><span
+                        class="additional-info">Send</span></a>
+            </li>
+            <li class="pure-menu-item ">
+                <a href="#" class="pure-menu-link selectable-image-container"
+                    :class="activeScreen == Screen.Receive && 'selected'"
+                    x-on:click="activeScreen = Screen.Receive"><span class="iconify iconify-button"
+                        data-icon="mdi-call-received"></span><br /><span class="additional-info">Receive</span></a>
+            </li>
+            <li class="pure-menu-item">
+                <a href="#" class="pure-menu-link selectable-image-container"
+                    :class="activeScreen == Screen.Account && 'selected'"
+                    x-on:click="activeScreen = Screen.Account"><span class="iconify iconify-button"
+                        data-icon="mdi-account-circle-outline"></span><br /><span class="additional-info">You</span></a>
+            </li>
+            <li class="pure-menu-item">
+                <a href="#" class="pure-menu-link selectable-image-container"
+                    :class="activeScreen == Screen.Info && 'selected'" x-on:click="activeScreen = Screen.Info"><span
+                        class="iconify iconify-button" data-icon="mdi-information-outline"></span><br /><span
+                        class="additional-info">Info</span></a>
+            </li>
+        </ul>
+    </div>
+    <div class="pure-g" x-show="activeScreen == Screen.Send">
+        <!-- ==================== SEND SCREEN ==================== -->
+        <div class="pure-u-1" x-show="engineState != CryptoEngineState.Unknown" x-transition>
+            <div class="content-box">
+                <div class="progress-element"
+                    :class="encryptedFiles.length > 0 ? 'w-100' : files.length > 0 ? 'w-66' : recipientPublicKeys.length > 0 ? 'w-33' : 'w-0'">
+                    &nbsp;</div>
+            </div>
+        </div>
+        <!-- Grid components shown side-by-side on big screen or one per row on smaller screens -->
+        <div class="pure-u-1 pure-u-lg-1-2" x-show="engineState != CryptoEngineState.Unknown" x-transition>
+            <div class="content-box">
+                <h3 class="title">Welcome</h3>
+                <div class="box-with-icon-and-text">
+                    <span class="iconify" data-icon="mdi-human-greeting"></span>
+                    <span x-show="recipientPublicKeys.length == 0">Welcome! In order to securely send
+                        files, please provide add at least one recipient.</span>
+                    <span
+                        x-show="recipientPublicKeys.length > 0 && files.length == 0 && encryptedFiles.length == 0">Nice!
+                        Now please add one or more
+                        files to be
+                        encrypted.</span>
+                    <span
+                        x-show="recipientPublicKeys.length > 0 && files.length > 0 && encryptedFiles.length == 0">Geat!
+                        You're all set to encrypt
+                        some secrets.</span>
+                    <span x-show="encryptedFiles.length > 0">Congrats! You successfully
+                        encrypted your data.</span>
+                </div>
+            </div>
+        </div>
+        <div class="pure-u-1 pure-u-lg-1-2" x-show="engineState == CryptoEngineState.Initialized" x-transition>
+            <div class="content-box">
+                <h3 class="title">To whom do you want to whisper?</h3>
+                <ul>
+                    <template x-for="key in recipientPublicKeys">
+                        <li x-text="key.xKidHint + ' (' + key.kid.slice(0,8) + '...)'"></li>
+                    </template>
+                </ul>
+                <div id="add-recipient-dropzone" class="dropzone">
+                    <span>Drag & Drop your recipient keys or click to open file chooser</span>
+                    <input id="add-recipient-dropzone-input" type="file" name="recipient-files" class="dropzone-input"
+                        multiple>
+                </div>
+            </div>
+        </div>
+        <div class="pure-u-1 pure-u-lg-1-2"
+            x-show="engineState == CryptoEngineState.Initialized && recipientPublicKeys.length > 0" x-transition>
+            <div class="content-box">
+                <h3 class="title">What do you want to whisper?</h3>
+                <ul>
+                    <template x-for="file in files">
+                        <li x-text="file.name"></li>
+                    </template>
+                </ul>
+                <div id="whisper-dropzone" class="dropzone">
+                    <span>Drag & Drop your file(s) to be encrypted or click to open file chooser</span>
+                    <input id="whisper-dropzone-input" type="file" name="whisper-files" class="dropzone-input" multiple>
+                </div>
+            </div>
+        </div>
+        <div class="pure-u-1 pure-u-lg-1-2"
+            x-show="engineState == CryptoEngineState.Initialized && recipientPublicKeys.length > 0 && files.length > 0"
+            x-transition>
+            <div class="content-box">
+                <h3 class="title">Ready?</h3>
+                <div class="box-with-icon-and-text">
+                    <span class="iconify" data-icon="mdi-lock-check-outline"></span><span>Your data
+                        will be encrypted locally on your device and can only be decrypted by the chosen
+                        recipients!</span>
+                </div>
+                <div class="box-with-icon-and-text">
+                    <a href="#" class="pure-menu-link selectable-image-container" x-on:click="$executeEncryption"
+                        x-bind:disabled="engineState != CryptoEngineState.Initialized"><span
+                            class="iconify iconify-button" data-icon="mdi-check"></span><br /><span
+                            class="additional-info">Go!</span></a>
+                    <a href="#" class="pure-menu-link selectable-image-container" x-on:click="$reset"
+                        x-bind:disabled="engineState != CryptoEngineState.Initialized"><span
+                            class="iconify iconify-button" data-icon="mdi-close"></span><br /><span
+                            class="additional-info">Reset</span></a>
+                </div>
+            </div>
+        </div>
+        <div class="pure-u-1 pure-u-lg-1-2" x-show="encryptedFiles.length > 0" x-transition>
+            <div class="content-box">
+                <h3 class="title">Complete!</h3>
+                <div class="box-with-icon-and-text">
+                    <span class="iconify" data-icon="mdi-check-circle-outline"></span>
+                    <div>
+                        <span>You can now download the
+                            encrypted files and send them to </span>
+                        <ul>
+                            <template x-for="key in recipientPublicKeys">
+                                <li x-text="key.xKidHint + ' (' + key.kid.slice(0,8) + '...)'"></li>
+                            </template>
+                        </ul>
+                    </div>
+                </div>
+                <div class="box-with-icon-and-text" style="flex-wrap: wrap;">
+                    <template x-for="file in encryptedFiles">
+                        <a href="#" class="pure-menu-link selectable-image-container"
+                            x-bind:href="'data:application/json;charset=utf-8,' + JSON.stringify(file.jwe)"
+                            x-bind:download="file.name + '-whisper.encypted.json'"
+                            x-on:click="$el.classList.add('selected')">
+                            <span class="iconify iconify-button" data-icon="mdi-tray-arrow-down"></span><br /><span
+                                class="additional-info"
+                                x-text="file.name.length > 11 ? file.name.slice(0,8) +'...' : file.name"></span></a>
+                    </template>
+                    <a href="#" class="pure-menu-link selectable-image-container" x-on:click="$reset"
+                        x-bind:disabled="engineState != CryptoEngineState.Initialized"><span
+                            class="iconify iconify-button" data-icon="mdi-close"></span><br /><span
+                            class="additional-info">Clear</span></a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== RECEIVE SCREEN ==================== -->
+    <div class="pure-g" x-show="activeScreen == Screen.Receive">
+        Receive
+    </div>
+
+    <!-- ==================== YOU SCREEN ==================== -->
+    <div class="pure-g" x-show="activeScreen == Screen.Account">
+        <div class="pure-u-1"
+            x-show="engineState != CryptoEngineState.Unknown && personalPublicKey && personalPrivateKey">
+            <div class="content-box">
+                <h3 class="title">Your keys</h3>
+                <div class="box-with-icon-and-text">
+                    <span class="iconify" data-icon="mdi-key-chain"></span>
+                    <div>
+                        We have successfully created a keypair
+                        for you and stored in in your local browser! You can download the public key here.
+                        This
+                        one is no secret and can be sent to anyone you want to receive whispers from.
+                        <div x-show="personalPublicKey && !personalPublicKey.xKidHint" style="margin-top: 0.5rem;">
+                            Before downloading and distributing your key, please provide some info on who you might
+                            be, like Name or E-Mail to help senders using it.
+                        </div>
+                        <form class="pure-form pure-form-aligned"
+                            x-show="personalPublicKey && !personalPublicKey.xKidHint">
+                            <label for="key-id-hint">Hint about you identity</label>
+                            <input id="key-id-hint" type="text" size="20" minlength="5" maxlength="50"
+                                x-on:keydown="$refs.btnHintOk.disabled = !$el.validity.valid"
+                                placeholder="Name or E-Mail" x-model="personalKeyHint" />
+                            <button x-ref="btnHintOk" class="pure-button pure-button-primary"
+                                x-on:click="$submitPersonalKeyHint" disabled><span class="iconify"
+                                    data-icon="mdi-check"></span>Ok</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="box-with-icon-and-text">
+                    <a href="#" class="pure-menu-link selectable-image-container"
+                        x-show="personalPublicKey && personalPublicKey.xKidHint"
+                        x-bind:href="'data:application/json;charset=utf-8,' + JSON.stringify(personalPublicKey)"
+                        x-bind:download="personalPublicKey?.xKidHint + '-' + personalPublicKey?.kid.slice(0,8) + '-whisper.public.json'"><span
+                            class="iconify iconify-button" data-icon="mdi-tray-arrow-down"></span><br /><span
+                            class="additional-info" x-text="personalPublicKey?.xKidHint"></span></a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== INFO SCREEN ==================== -->
+    <div class="pure-g" x-show="activeScreen == Screen.Info">
+        <div class="pure-u-1">
+            <div class="content-box">
+                <h3 class="title">Security of JWE Transmission</h3>
+                <div class="box-with-icon-and-text">
+                    <span class="iconify" data-icon="mdi-security"></span>
+                    <div>
+
+                        <h4>Encryption Strength</h4>
+                        JWE uses strong encryption algorithms (e.g., AES-GCM for content encryption and RSA
+                        or
+                        ECDH for key encryption). These algorithms ensure that the payload remains confidential and
+                        tamper-proof.
+
+                        <h4>Hybrid Encryption</h4>
+                        JWE employs hybrid encryption, where:
+                        <ul>
+                            <li>A symmetric Content Encryption Key (CEK) is generated for encrypting the payload.</li>
+                            <li>The CEK is encrypted for each recipient using their public key (asymmetric encryption).
+                            </li>
+                            <li>This ensures that only recipients with the corresponding private key can decrypt the CEK
+                                and
+                                access
+                                the
+                                payload.</li>
+                        </ul>
+
+                        <h4>Integrity Protection</h4>
+                        JWE includes an authentication tag (e.g., in AES-GCM) to ensure that the
+                        ciphertext has not been tampered with during transmission.
+                        <h4>Conclusion</h4>
+                        JWE is a highly secure mechanism for transmitting sensitive data over insecure channels,
+                        provided
+                        that:
+                        <ul>
+                            <li>Private keys are kept confidential.</li>
+                            <li>Strong algorithms (like ECDH-ES+A256KW for key wrapping and A256GCM for content
+                                encryption)
+                                are
+                                used.</li>
+                            <li>Libraries are kept up to date to mitigate known vulnerabilities.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="pure-u-1 pure-u-lg-1-2" x-show="engineState != CryptoEngineState.Unknown && personalPublicKey">
+            <div class="content-box">
+                <h3 class="title">Personal public key info (debugging)</h3>
+                <div x-text="JSON.stringify(personalPublicKey)" class="additional-info"></div>
+            </div>
+        </div>
+        <div class="pure-u-1 pure-u-lg-1-2"
+            x-show="engineState != CryptoEngineState.Unknown && recipientPublicKeys.length > 0">
+            <div class="content-box">
+                <h3 class="title">Recipient public key info (debugging)</h3>
+                <template x-for="key in recipientPublicKeys">
+                    <div x-text="JSON.stringify(key)" class="additional-info"></div>
+                </template>
+            </div>
+        </div>
+        <div class="pure-u-1 pure-u-lg-1-2" x-show="engineState != CryptoEngineState.Unknown && personalPrivateKey">
+            <div class="content-box">
+                <h3 class="title">Personal private key info (debugging)</h3>
+                <div x-text="JSON.stringify(personalPrivateKey)" class="additional-info"></div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

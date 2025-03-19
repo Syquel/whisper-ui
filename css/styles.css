@@ -1,0 +1,147 @@
+:root {
+    --bootom-color: ghostwhite;
+    --theme-color-1: #0047ab;
+    /* Syncorix Cobalt Blue */
+    --theme-color-2: limegreen;
+    /* Syncorix Lime Greem */
+}
+
+/* create a box w/ margins to put content into */
+.content-box {
+    margin-top: 2rem;
+    margin-left: 1rem;
+    margin-right: 1rem;
+    overflow: auto;
+    /* prevent long text from leaking between divs */
+}
+
+/* h-elements w/ class title in content-box */
+.content-box>h1.title,
+h2.title,
+h3.title,
+h4.title,
+h5.title,
+h6.title {
+    border-bottom: 1px solid gray;
+    text-align: left;
+}
+
+/* center tables in the box if there is space left */
+.content-box>table {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* disable padding when using icons as menu entries */
+.pure-menu-link {
+    padding: 0em;
+}
+
+/* Create large buttons with icons */
+.iconify-button {
+    font-size: 2rem;
+}
+
+.dropzone {
+    margin: 1rem;
+    border: 0.2rem dashed gray;
+    border-radius: 1rem;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    height: 5rem;
+    display: flex;
+    cursor: pointer;
+    color: gray;
+}
+
+.dropzone-over {
+    border: solid;
+}
+
+.dropzone-input {
+    display: none;
+}
+
+/** additionsl informational element with lowe emphasis */
+.additional-info {
+    font-size: smaller;
+    color: gray;
+}
+
+/** div to put a larger iconify icon span and a text ´ */
+.box-with-icon-and-text {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.box-with-icon-and-text>.iconify {
+    min-width: 10%;
+    font-size: 3rem;
+}
+
+.box-with-icon-and-text>a>.iconify {
+    margin: 1rem;
+}
+
+.selectable-image-container {
+    /* somehow important for selction indicator to work */
+    position: relative;
+    /* space for the bar below */
+    margin: 0.5rem;
+    /* center align text below images */
+    text-align: center;
+}
+
+.selectable-image-container::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    /* Place the bar below the image */
+    left: 0;
+    width: 0;
+    /* Default: no bar visible */
+    height: 4px;
+    /* Height of the bar */
+    background-color: var(--theme-color-2);
+    /* Bar color (adjust as needed) */
+    transition: width 0.3s ease;
+    /* Smooth transition for hover effect */
+}
+
+.selectable-image-container:hover::after,
+.selectable-image-container.selected::after {
+    width: 100%;
+    /* Bar expands to full width */
+}
+
+.progress-element {
+    height: 0.5rem;
+    background-color: var(--theme-color-1);
+}
+
+/** Width classes, e.g. for progress bars */
+.w-0 {
+    width: 0;
+}
+
+.w-10 {
+    width: 10%;
+    transition: width 0.3s ease;
+}
+
+.w-33 {
+    width: 33%;
+    transition: width 0.3s ease;
+}
+
+.w-66 {
+    width: 66%;
+    transition: width 0.3s ease;
+}
+
+.w-100 {
+    width: 100%;
+    transition: width 0.3s ease;
+}
