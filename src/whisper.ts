@@ -23,7 +23,7 @@ export enum CryptoEngineState {
     Initialized
 }
 /* File name suffixes to distinguish from original */
-enum FileSuffix {
+export enum FileSuffix {
     PersonalPublicKey = "-whisper.public.json",
     EncryptedFile = "-whisper.encrypted.json"
 }
@@ -53,15 +53,18 @@ type ReceivedScreen = {
     encryptedFiles: Array<EncryptedFile>;
     decryptedFiles: Array<DecryptedFile>;
 }
+type AccountScreen = {
+    personalKeyHint: string;
+}
 // type of local "session" object
 type Store = {
     activeScreen: Screen;
     engineState: CryptoEngineState;
     personalPublicKey: JWKWithKeyHint | null;
     personalPrivateKey: JWK | null;
-    personalKeyHint: string;
     sendScreen: SendScreen;
     receivedScreen: ReceivedScreen;
+    accountScreen: AccountScreen;
     shortenTo11(input: string): string;
 };
 // instance of local "session" containing all info to be dynamically updated by alpine
@@ -70,7 +73,6 @@ const store: Store = {
     engineState: CryptoEngineState.Unkwown,
     personalPublicKey: null,
     personalPrivateKey: null,
-    personalKeyHint: '',
     sendScreen: {
         recipientPublicKeys: [],
         filesToEncrypt: [],
@@ -79,6 +81,9 @@ const store: Store = {
     receivedScreen: {
         encryptedFiles: [],
         decryptedFiles: []
+    },
+    accountScreen: {
+        personalKeyHint: '',
     },
     shortenTo11: shortenTo11
 }
@@ -103,16 +108,18 @@ function keysAvailable(personalKeyPair: JWKPair) {
 // Reset states in order to start over
 function reset() {
     const store = (Alpine.store(whisperStateStoreName) as Store)
-    store.personalKeyHint = '';
-
+    
     // Reset send screen
     store.sendScreen.recipientPublicKeys.length = 0;
     store.sendScreen.filesToEncrypt.length = 0;
     store.sendScreen.encryptedFiles.length = 0;
-
+    
     // Reset Received Screen
     store.receivedScreen.encryptedFiles.length = 0;
     store.receivedScreen.decryptedFiles.length = 0;
+    
+    // Reset Account Screen
+    store.accountScreen.personalKeyHint = '';
 
     store.engineState = CryptoEngineState.Initialized;
 }
@@ -122,7 +129,7 @@ function submitPersonalKeyHint() {
     const alpineStore = (Alpine.store(whisperStateStoreName) as Store)
     if (alpineStore.personalPublicKey) {
         // Set custom hint and save updated reference
-        alpineStore.personalPublicKey.xKidHint = alpineStore.personalKeyHint
+        alpineStore.personalPublicKey.xKidHint = alpineStore.accountScreen.personalKeyHint
     }
     // But store the "raw" keys and not the alpine proxy to IndexedDB
     if (store.personalPublicKey && store.personalPrivateKey) {

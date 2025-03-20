@@ -269,7 +269,7 @@
         </div>
     </div>
 
-    <!-- ==================== YOU SCREEN ==================== -->
+    <!-- ==================== YOU / ACCOUNT SCREEN ==================== -->
     <div class="pure-g" x-show="activeScreen == Screen.Account">
         <div class="pure-u-1"
             x-show="engineState != CryptoEngineState.Unknown && personalPublicKey && personalPrivateKey">
@@ -286,16 +286,16 @@
                             Before downloading and distributing your key, please provide some info on who you might
                             be, like Name or E-Mail to help senders using it.
                         </div>
-                        <form class="pure-form pure-form-aligned"
+                        <div class="pure-form pure-form-aligned"
                             x-show="personalPublicKey && !personalPublicKey.xKidHint">
                             <label for="key-id-hint">Hint about you identity</label>
                             <input id="key-id-hint" type="text" size="20" minlength="5" maxlength="50"
                                 x-on:keydown="$refs.btnHintOk.disabled = !$el.validity.valid"
-                                placeholder="Name or E-Mail" x-model="personalKeyHint" />
+                                placeholder="Name or E-Mail" x-model="accountScreen.personalKeyHint" />
                             <button x-ref="btnHintOk" class="pure-button pure-button-primary"
                                 x-on:click="$submitPersonalKeyHint" disabled><span class="iconify"
                                     data-icon="mdi-check"></span>Ok</button>
-                        </form>
+                        </div>
                     </div>
                 </div>
                 <div class="box-with-icon-and-text">
