@@ -67,7 +67,7 @@
         <div class="pure-u-1" x-show="engineState != CryptoEngineState.Unknown" x-transition>
             <div class="content-box">
                 <div class="progress-element"
-                    :class="encryptedFiles.length > 0 ? 'w-100' : files.length > 0 ? 'w-66' : recipientPublicKeys.length > 0 ? 'w-33' : 'w-0'">
+                    :class="sendScreen.encryptedFiles.length > 0 ? 'w-100' : sendScreen.filesToEncrypt.length > 0 ? 'w-66' : sendScreen.recipientPublicKeys.length > 0 ? 'w-33' : 'w-0'">
                     &nbsp;</div>
             </div>
         </div>
@@ -77,28 +77,28 @@
                 <h3 class="title">Welcome</h3>
                 <div class="box-with-icon-and-text">
                     <span class="iconify" data-icon="mdi-human-greeting"></span>
-                    <span x-show="recipientPublicKeys.length == 0">Welcome! In order to securely send
+                    <span x-show="sendScreen.recipientPublicKeys.length == 0">Welcome! In order to securely send
                         files, please provide add at least one recipient.</span>
                     <span
-                        x-show="recipientPublicKeys.length > 0 && files.length == 0 && encryptedFiles.length == 0">Nice!
+                        x-show="sendScreen.recipientPublicKeys.length > 0 && sendScreen.filesToEncrypt.length == 0 && sendScreen.encryptedFiles.length == 0">Nice!
                         Now please add one or more
                         files to be
                         encrypted.</span>
                     <span
-                        x-show="recipientPublicKeys.length > 0 && files.length > 0 && encryptedFiles.length == 0">Great!
+                        x-show="sendScreen.recipientPublicKeys.length > 0 && sendScreen.filesToEncrypt.length > 0 && sendScreen.encryptedFiles.length == 0">Great!
                         You're all set to encrypt
                         some secrets.</span>
-                    <span x-show="encryptedFiles.length > 0">Congrats! You successfully
+                    <span x-show="sendScreen.encryptedFiles.length > 0">Congrats! You successfully
                         encrypted your data.</span>
                 </div>
             </div>
         </div>
         <div class="pure-u-1 pure-u-lg-1-2"
-            x-show="engineState == CryptoEngineState.Initialized && encryptedFiles.length == 0" x-transition>
+            x-show="engineState == CryptoEngineState.Initialized && sendScreen.encryptedFiles.length == 0" x-transition>
             <div class="content-box">
                 <h3 class="title">To whom do you want to whisper?</h3>
                 <ul>
-                    <template x-for="key in recipientPublicKeys">
+                    <template x-for="key in sendScreen.recipientPublicKeys">
                         <li x-text="key.xKidHint + ' (' + shortenTo11(key.kid) + ')'"></li>
                     </template>
                 </ul>
@@ -110,12 +110,12 @@
             </div>
         </div>
         <div class="pure-u-1 pure-u-lg-1-2"
-            x-show="engineState == CryptoEngineState.Initialized && recipientPublicKeys.length > 0 && encryptedFiles.length == 0"
+            x-show="engineState == CryptoEngineState.Initialized && sendScreen.recipientPublicKeys.length > 0 && sendScreen.encryptedFiles.length == 0"
             x-transition>
             <div class="content-box">
                 <h3 class="title">What do you want to whisper?</h3>
                 <ul>
-                    <template x-for="file in files">
+                    <template x-for="file in sendScreen.filesToEncrypt">
                         <li x-text="file.name"></li>
                     </template>
                 </ul>
@@ -126,7 +126,7 @@
             </div>
         </div>
         <div class="pure-u-1 pure-u-lg-1-2"
-            x-show="engineState == CryptoEngineState.Initialized && recipientPublicKeys.length > 0 && files.length > 0 && encryptedFiles.length == 0"
+            x-show="engineState == CryptoEngineState.Initialized && sendScreen.recipientPublicKeys.length > 0 && sendScreen.filesToEncrypt.length > 0 && sendScreen.encryptedFiles.length == 0"
             x-transition>
             <div class="content-box">
                 <h3 class="title">Ready?</h3>
@@ -147,7 +147,7 @@
                 </div>
             </div>
         </div>
-        <div class="pure-u-1 pure-u-lg-1-2" x-show="encryptedFiles.length > 0" x-transition>
+        <div class="pure-u-1 pure-u-lg-1-2" x-show="sendScreen.encryptedFiles.length > 0" x-transition>
             <div class="content-box">
                 <h3 class="title">Complete!</h3>
                 <div class="box-with-icon-and-text">
@@ -156,14 +156,14 @@
                         <span>You can now download the
                             encrypted files and send them to </span>
                         <ul>
-                            <template x-for="key in recipientPublicKeys">
+                            <template x-for="key in sendScreen.recipientPublicKeys">
                                 <li x-text="key.xKidHint + ' (' + shortenTo11(key.kid) + ')'"></li>
                             </template>
                         </ul>
                     </div>
                 </div>
                 <div class="box-with-icon-and-text" style="flex-wrap: wrap;">
-                    <template x-for="file in encryptedFiles">
+                    <template x-for="file in sendScreen.encryptedFiles">
                         <a href="#" class="pure-menu-link selectable-image-container"
                             x-bind:href="'data:application/json;charset=utf-8,' + JSON.stringify(file.jwe)"
                             x-bind:download="file.name + FileSuffix.EncryptedFile"
@@ -361,15 +361,6 @@
             <div class="content-box">
                 <h3 class="title">Personal public key info (debugging)</h3>
                 <div x-text="JSON.stringify(personalPublicKey)" class="additional-info"></div>
-            </div>
-        </div>
-        <div class="pure-u-1 pure-u-lg-1-2"
-            x-show="engineState != CryptoEngineState.Unknown && recipientPublicKeys.length > 0">
-            <div class="content-box">
-                <h3 class="title">Recipient public key info (debugging)</h3>
-                <template x-for="key in recipientPublicKeys">
-                    <div x-text="JSON.stringify(key)" class="additional-info"></div>
-                </template>
             </div>
         </div>
         <div class="pure-u-1 pure-u-lg-1-2" x-show="engineState != CryptoEngineState.Unknown && personalPrivateKey">

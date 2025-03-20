@@ -44,6 +44,11 @@ type DecryptedFile = {
     name: string;
     data: string; // base64
 }
+type SendScreen = {
+    recipientPublicKeys: Array<JWKWithKeyHint>;
+    filesToEncrypt: Array<File>;
+    encryptedFiles: Array<EncryptedFile>;
+}
 type ReceivedScreen = {
     encryptedFiles: Array<EncryptedFile>;
     decryptedFiles: Array<DecryptedFile>;
@@ -54,10 +59,8 @@ type Store = {
     engineState: CryptoEngineState;
     personalPublicKey: JWKWithKeyHint | null;
     personalPrivateKey: JWK | null;
-    recipientPublicKeys: Array<JWKWithKeyHint>;
-    files: Array<File>;
-    encryptedFiles: Array<EncryptedFile>;
     personalKeyHint: string;
+    sendScreen: SendScreen;
     receivedScreen: ReceivedScreen;
     shortenTo11(input: string): string;
 };
@@ -67,10 +70,12 @@ const store: Store = {
     engineState: CryptoEngineState.Unkwown,
     personalPublicKey: null,
     personalPrivateKey: null,
-    recipientPublicKeys: [],
-    files: [],
-    encryptedFiles: [],
     personalKeyHint: '',
+    sendScreen: {
+        recipientPublicKeys: [],
+        filesToEncrypt: [],
+        encryptedFiles: [],
+    },
     receivedScreen: {
         encryptedFiles: [],
         decryptedFiles: []
@@ -98,11 +103,14 @@ function keysAvailable(personalKeyPair: JWKPair) {
 // Reset states in order to start over
 function reset() {
     const store = (Alpine.store(whisperStateStoreName) as Store)
-    store.recipientPublicKeys.length = 0;
-    store.files.length = 0;
-    store.encryptedFiles.length = 0;
     store.personalKeyHint = '';
 
+    // Reset send screen
+    store.sendScreen.recipientPublicKeys.length = 0;
+    store.sendScreen.filesToEncrypt.length = 0;
+    store.sendScreen.encryptedFiles.length = 0;
+
+    // Reset Received Screen
     store.receivedScreen.encryptedFiles.length = 0;
     store.receivedScreen.decryptedFiles.length = 0;
 
@@ -124,7 +132,7 @@ function submitPersonalKeyHint() {
 
 function whisperFilesAdded(files: Array<File>) {
     const store = (Alpine.store(whisperStateStoreName) as Store)
-    store.files.push(...files);
+    store.sendScreen.filesToEncrypt.push(...files);
 }
 
 async function recipientKeysAdded(files: Array<File>) {
@@ -133,7 +141,7 @@ async function recipientKeysAdded(files: Array<File>) {
             .then(jwk => {
                 console.log("A new recipient seems to be available!")
                 const store = (Alpine.store(whisperStateStoreName) as Store)
-                store.recipientPublicKeys.push(jwk);
+                store.sendScreen.recipientPublicKeys.push(jwk);
             })
             .catch(ex => console.warn("Failed to accept recipient jwk!", ex));
     });
@@ -141,11 +149,11 @@ async function recipientKeysAdded(files: Array<File>) {
 
 function executeEncryption() {
     const store = (Alpine.store(whisperStateStoreName) as Store)
-    const keys = store.recipientPublicKeys;
-    store.files.forEach(f => {
+    const keys = store.sendScreen.recipientPublicKeys;
+    store.sendScreen.filesToEncrypt.forEach(f => {
         crypto.encryptFileForMultipleRecipients(f, keys)
             .then(jwe => ({ name: f.name, jwe: jwe }))
-            .then(ef => store.encryptedFiles.push(ef))
+            .then(ef => store.sendScreen.encryptedFiles.push(ef))
             .catch(e => console.warn("Failed to encrypt %s.", f.name, e))
     })
 }
