@@ -22,11 +22,9 @@ enum DBModes {
     RW = 'readwrite'
 }
 type KeysAvailableListener = (personalKeyPair: JWKPair) => void;
-type JWEEncryptionCompleteListener = (fileName: string, jwe: jose.GeneralJWE) => void;
 export default function (...listeners: Array<KeysAvailableListener>) {
     // Check for IndexedDB support
     // TODO: Consider using https://modernizr.com/ for IndexedDB and WebCryptoAPI checks
-
     if (!window.indexedDB) {
         console.log("Your browser doesn't support IndexedDB.");
     } else if (listeners?.length > 0) {
@@ -36,23 +34,39 @@ export default function (...listeners: Array<KeysAvailableListener>) {
     }
 } // makes this a module
 
-export async function validateAndParseJWKString(jwkString: string): Promise<JWKWithKeyHint> {
-    // TODO: Better exception handling?
+export async function validateAndParseJWKFile(jwkFile: File): Promise<JWKWithKeyHint> {
     // Parse the JWK string into a JSON object
-    const parsedJWK: JWKWithKeyHint = JSON.parse(jwkString)
+    return jwkFile.text()
+        .then(t => JSON.parse(t) as JWKWithKeyHint)
+        .then(async jwkWithHint => ({ jwkWithHint: jwkWithHint, imported: await jose.importJWK(jwkWithHint) }))
+        .then(({ jwkWithHint, imported }) => {
+            //TODO Better checks - we expect for instance a kid and our custom xKidHint but never a private d claim
+            if (imported instanceof CryptoKey
+                && imported.algorithm
+                && jwkWithHint.kid
+                && jwkWithHint.xKidHint
+                && jwkWithHint.alg
+                && jwkWithHint.x
+                && jwkWithHint.y
+                && !jwkWithHint.d) {
+                return jwkWithHint;
+            }
+            throw "Supplied text does not look like a valid whisper JWK!";
+        });
+}
 
-    // Import the JWK
-    const key: CryptoKey | Uint8Array | void = await jose.importJWK(parsedJWK)
-
-    if (key instanceof CryptoKey) {
-        const cryptoKey: CryptoKey = key;
-        //TODO proper checks - we expect for instance a kid and our custom xKidHint but never a private d claim
-        if (cryptoKey.algorithm && parsedJWK.kid && parsedJWK.xKidHint && parsedJWK.alg && parsedJWK.x && parsedJWK.y && !parsedJWK.d) {
-            return parsedJWK;
-        }
-    }
-
-    throw "Supplied text does not look like a valid whisper JWK!";
+export async function validateAndParseJWEFile(jweFile: File, jwk: jose.JWK): Promise<jose.GeneralJWE> {
+    const kid = jwk.kid;
+    return jweFile.text()
+        .then(t => JSON.parse(t) as jose.GeneralJWE)
+        .then(jwe => {
+            if (jwe.recipients.filter(r => kid == r.header?.kid).length > 0) {
+                // Yes! We found a recepient matching our personal kid 
+                console.log("Found matching kid %s in JWE file %s.", kid, jweFile.name)
+                return jwe;
+            }
+            throw "Could not find recipient for kid " + kid + " in JWE."
+        });
 }
 
 /** Updates the changed key pair previously changed by reference (we might want to change this someday) */
@@ -66,12 +80,9 @@ export function storePersonalKeyPair(personalKeyPair: JWKPair, ...listeners: Arr
     }
 }
 
-export async function encryptFilesForMultipleRecipients(files: Array<File>, recipients: Array<jose.JWK>, listener: JWEEncryptionCompleteListener) {
-    files.forEach(f => encryptFileForMultipleRecipients(f, recipients, listener));
-}
-export async function encryptFileForMultipleRecipients(file: File, recipients: Array<jose.JWK>, listener: JWEEncryptionCompleteListener) {
+export async function encryptFileForMultipleRecipients(file: File, recipients: Array<jose.JWK>): Promise<jose.GeneralJWE> {
     //TODO: Memory consumption, streaming of content, is text encoding the right way?int8Array
-    file.arrayBuffer()
+    return file.arrayBuffer()
         // Initialize GeneralEncrypt with file contents
         .then(b => new Uint8Array(b))
         .then(b => new jose.GeneralEncrypt(b))
@@ -83,9 +94,7 @@ export async function encryptFileForMultipleRecipients(file: File, recipients: A
         .then(p => Promise.all(p))
         // Call the shorthand method to encrpyt the JWE on any one recipient
         .then(r => r[0].encrypt())
-        // Notify listeners
-        .then(jwe => listener(file.name, jwe))
-        .catch(console.error);
+        ;
 }
 
 async function addRecipient(jwk: jose.JWK, encryptor: jose.GeneralEncrypt): Promise<jose.Recipient> {
@@ -94,6 +103,13 @@ async function addRecipient(jwk: jose.JWK, encryptor: jose.GeneralEncrypt): Prom
         .then(pk => encryptor.addRecipient(pk))
         // Add the kid to recipient header in JWE in order to select key when decrypting
         .then(r => r.setUnprotectedHeader({ kid: jwk.kid }));
+}
+
+export async function decryptFile(jwe: jose.GeneralJWE, personalPrivateKey: jose.JWK): Promise<Uint8Array> {
+    return jose.importJWK(personalPrivateKey, jweAlg)
+        .then(pk => jose.generalDecrypt(jwe, pk))
+        .then(res => res.plaintext)
+        ;
 }
 
 /** ========= internal, non exported stuff ========= */

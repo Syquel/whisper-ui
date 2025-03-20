@@ -1,12 +1,12 @@
 import * as crypto from './whisper-crypto'
 import { JWKWithKeyHint, JWKPair } from './whisper-crypto'
 import * as dropzone from './whisper-dropzone'
-import Alpine, { ElementWithXAttributes } from 'alpinejs'
+import Alpine from 'alpinejs'
 import { JWK, GeneralJWE } from 'jose'
 
 // Call default module exports, provide listeners
 crypto.default(keysAvailable)
-dropzone.default([whisperFilesAdded], [recipientKeysAdded])
+dropzone.default([whisperFilesAdded], [recipientKeysAdded], [receivedWhisperFilesAdded])
 
 // Screens selectable per menu
 export enum Screen {
@@ -20,23 +20,33 @@ export enum CryptoEngineState {
     // Engine has not been initialized and maybe never will if brwoser doesn't support it
     Unkwown,
     // Engine is intialized and can be used
-    Initialized,
-    // Engine is being used
-    Busy,
-    // encryption / decryption has finished
-    CryptComplete
+    Initialized
+}
+/* File name suffixes to distinguish from original */
+enum FileSuffix {
+    PersonalPublicKey = "-whisper.public.json",
+    EncryptedFile = "-whisper.encrypted.json"
 }
 // Add to window to be usable from inline JS in Alpine
 // https://alpinejs.dev/essentials/installation#as-a-module
 window.Alpine = Alpine;
 window.Screen = Screen;
 window.CryptoEngineState = CryptoEngineState;
+window.FileSuffix = FileSuffix;
 
 // Alpine configuration, create a store for Alpine to react on
 const whisperStateStoreName = "whisperState" // TODO: Is a single store sufficient and good practice?
 type EncryptedFile = {
     name: string;
     jwe: GeneralJWE;
+}
+type DecryptedFile = {
+    name: string;
+    data: string; // base64
+}
+type ReceivedScreen = {
+    encryptedFiles: Array<EncryptedFile>;
+    decryptedFiles: Array<DecryptedFile>;
 }
 // type of local "session" object
 type Store = {
@@ -48,6 +58,8 @@ type Store = {
     files: Array<File>;
     encryptedFiles: Array<EncryptedFile>;
     personalKeyHint: string;
+    receivedScreen: ReceivedScreen;
+    shortenTo11(input: string): string;
 };
 // instance of local "session" containing all info to be dynamically updated by alpine
 const store: Store = {
@@ -58,15 +70,20 @@ const store: Store = {
     recipientPublicKeys: [],
     files: [],
     encryptedFiles: [],
-    personalKeyHint: ''
+    personalKeyHint: '',
+    receivedScreen: {
+        encryptedFiles: [],
+        decryptedFiles: []
+    },
+    shortenTo11: shortenTo11
 }
 // Register store with alpine
 Alpine.store(whisperStateStoreName, store);
 // Link some callbacks to alpine context
-// Alpine.magic('copyPersonalPublicKeysToClipboard', copyPersonalPublicKeysToClipboard);
 Alpine.magic('reset', reset);
 Alpine.magic('submitPersonalKeyHint', submitPersonalKeyHint);
 Alpine.magic('executeEncryption', executeEncryption);
+Alpine.magic('executeDecryption', executeDecryption);
 // Start the show
 Alpine.start();
 
@@ -85,6 +102,10 @@ function reset() {
     store.files.length = 0;
     store.encryptedFiles.length = 0;
     store.personalKeyHint = '';
+
+    store.receivedScreen.encryptedFiles.length = 0;
+    store.receivedScreen.decryptedFiles.length = 0;
+
     store.engineState = CryptoEngineState.Initialized;
 }
 
@@ -107,22 +128,64 @@ function whisperFilesAdded(files: Array<File>) {
 }
 
 async function recipientKeysAdded(files: Array<File>) {
-    files.forEach(async f => {
-        f.text().then(crypto.validateAndParseJWKString).then(jwk => {
-            console.log("A new recipient seems to be available!")
-            const store = (Alpine.store(whisperStateStoreName) as Store)
-            store.recipientPublicKeys.push(jwk);
-
-        }).catch(ex => console.warn("Failed to accept recipient jwk!", ex));
-    }
-    );
+    files.forEach(f => {
+        crypto.validateAndParseJWKFile(f)
+            .then(jwk => {
+                console.log("A new recipient seems to be available!")
+                const store = (Alpine.store(whisperStateStoreName) as Store)
+                store.recipientPublicKeys.push(jwk);
+            })
+            .catch(ex => console.warn("Failed to accept recipient jwk!", ex));
+    });
 }
 
 function executeEncryption() {
-    (Alpine.store(whisperStateStoreName) as Store).engineState = CryptoEngineState.Busy
-    crypto.encryptFilesForMultipleRecipients(store.files, store.recipientPublicKeys, encryptionComplete)
+    const store = (Alpine.store(whisperStateStoreName) as Store)
+    const keys = store.recipientPublicKeys;
+    store.files.forEach(f => {
+        crypto.encryptFileForMultipleRecipients(f, keys)
+            .then(jwe => ({ name: f.name, jwe: jwe }))
+            .then(ef => store.encryptedFiles.push(ef))
+            .catch(e => console.warn("Failed to encrypt %s.", f.name, e))
+    })
 }
 
-function encryptionComplete(filename: string, jwe: GeneralJWE) {
-    (Alpine.store(whisperStateStoreName) as Store).encryptedFiles.push({ name: filename, jwe: jwe });
+async function receivedWhisperFilesAdded(files: Array<File>) {
+    const store = (Alpine.store(whisperStateStoreName) as Store)
+    if (store.personalPublicKey) {
+        const jwk: JWK = store.personalPublicKey;
+        files.forEach(f => {
+            crypto.validateAndParseJWEFile(f, jwk)
+                .then(j => ({ name: f.name, jwe: j }))
+                .then(ef => store.receivedScreen.encryptedFiles.push(ef))
+                .catch(e => console.warn("File %s is no valid JWE containing a recipient with kid %s", f.name, jwk.kid, e))
+        })
+    }
+}
+
+function executeDecryption() {
+    const store = (Alpine.store(whisperStateStoreName) as Store)
+    if (store.personalPrivateKey) {
+        const jwk: JWK = store.personalPrivateKey;
+        store.receivedScreen.encryptedFiles.forEach(f => {
+            crypto.decryptFile(f.jwe, jwk)
+                .then(d => ({ name: tryExtractFileName(f.name), data: base64(d) } as DecryptedFile))
+                .then(r => store.receivedScreen.decryptedFiles.push(r))
+                .then(() => console.log("Successully decypted %s with kid %s.", f.name, jwk.kid))
+                .catch(e => console.warn("Failed to decrypt %s", f.name, e))
+        })
+    }
+}
+
+function tryExtractFileName(fileName: string): string {
+    return fileName.replace(FileSuffix.EncryptedFile, "");
+}
+
+/** Take the first 8 chars of input and appen '...' doing nothing when input length is 11 chars or less */
+function shortenTo11(input: string): string {
+    return input.length > 11 ? input.slice(0, 8) + "..." : input;
+}
+
+function base64(data: Uint8Array): string {
+    return btoa(String.fromCharCode(...data));
 }

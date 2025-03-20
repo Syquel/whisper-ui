@@ -1,53 +1,49 @@
-export default function (whisperListeners?: Array<FilesDroppedListener>, recipientListeners?: Array<FilesDroppedListener>) {
-    if (whisperListeners) {
-        whisperFilesDroppedListeners.push(...whisperListeners);
-    }
-    if (recipientListeners) {
-        recipientKeyFilesDroppedListeners.push(...recipientListeners);
-    }
-    initWhisperDropZone();
-    initRecipientDropZone();
+export default function (sendWhisperFilesListeners: Array<FilesDroppedListener>, recipientFilesListeners: Array<FilesDroppedListener>, receivedWhisperFilesListeners: Array<FilesDroppedListener>) {
+    initSendWhisperFilesDropZone(sendWhisperFilesListeners);
+    initRecipientDropZone(recipientFilesListeners);
+    initReceivedWhisperFilesDropZone(receivedWhisperFilesListeners)
 } // makes this a module
 
-const clickEvent: string = "click";
-const dragoverEvent: string = "dragover";
-const dragleaveEvent: string = "dragleave";
-const dragendEvent: string = "dragend";
-const changeEvent: string = "change";
+enum Event {
+    Click = "click",
+    DragOver = "dragover",
+    DragLeave = "dragleave",
+    DragEnd = "dragend",
+    Drop = "drop",
+    Change = "change",
+}
 const classOver = "dropzone-over"
 type FilesDroppedListener = (files: Array<File>) => void;
 
 /** ========= internal, non exported stuff ========= */
-
-const whisperFilesDroppedListeners: Array<FilesDroppedListener> = [];
-const recipientKeyFilesDroppedListeners: Array<FilesDroppedListener> = [];
-
-async function notifyFilesAvailable(listsners: Array<FilesDroppedListener>, files: Array<File>) {
-    listsners.forEach(l => l(files));
-}
-
-function initWhisperDropZone() {
+function initSendWhisperFilesDropZone(listeners: Array<FilesDroppedListener>) {
     const dropZoneElement = document.getElementById("whisper-dropzone") as HTMLElement;
     const dropZoneInputElement = document.getElementById("whisper-dropzone-input") as HTMLInputElement;
-    initDropZone(dropZoneElement, dropZoneInputElement, whisperFilesDroppedListeners);
+    initDropZone(dropZoneElement, dropZoneInputElement, listeners);
 }
 
-function initRecipientDropZone() {
+function initRecipientDropZone(listeners: Array<FilesDroppedListener>) {
     const dropZoneElement = document.getElementById("add-recipient-dropzone") as HTMLElement;
     const dropZoneInputElement = document.getElementById("add-recipient-dropzone-input") as HTMLInputElement;
-    initDropZone(dropZoneElement, dropZoneInputElement, recipientKeyFilesDroppedListeners);
+    initDropZone(dropZoneElement, dropZoneInputElement, listeners);
+}
+
+function initReceivedWhisperFilesDropZone(listeners: Array<FilesDroppedListener>) {
+    const dropZoneElement = document.getElementById("whisper-received-dropzone") as HTMLElement;
+    const dropZoneInputElement = document.getElementById("whisper-received-dropzone-input") as HTMLInputElement;
+    initDropZone(dropZoneElement, dropZoneInputElement, listeners);
 }
 
 function initDropZone(dropZoneElement: HTMLElement, dropZoneInputElement: HTMLInputElement, listeners: Array<FilesDroppedListener>) {
     // Open file dialog on click
-    dropZoneElement.addEventListener(clickEvent, e => dropZoneInputElement.click())
-    dropZoneElement.addEventListener(dragoverEvent, e => {
+    dropZoneElement.addEventListener(Event.Click, e => dropZoneInputElement.click())
+    dropZoneElement.addEventListener(Event.DragOver, e => {
         e.preventDefault();
         dropZoneElement.classList.add(classOver);
     });
-    [dragleaveEvent, dragendEvent].forEach(type => dropZoneElement.addEventListener(type, e => dropZoneElement.classList.remove(classOver)))
+    [Event.DragLeave, Event.DragEnd].forEach(type => dropZoneElement.addEventListener(type, e => dropZoneElement.classList.remove(classOver)))
 
-    dropZoneElement.addEventListener('drop', (e: DragEvent) => {
+    dropZoneElement.addEventListener(Event.Drop, (e: DragEvent) => {
         e.preventDefault();
 
         if (e.dataTransfer?.files.length) {
@@ -58,7 +54,7 @@ function initDropZone(dropZoneElement: HTMLElement, dropZoneInputElement: HTMLIn
         dropZoneElement.classList.remove(classOver);
     });
 
-    dropZoneInputElement.addEventListener(changeEvent, (e: Event) => {
+    dropZoneInputElement.addEventListener(Event.Change, e => {
         if (dropZoneInputElement.files?.length) {
             const files = dropZoneInputElement.files;
             console.log("Received %d files on %s.", dropZoneInputElement.files?.length, e.target)

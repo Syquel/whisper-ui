@@ -136,6 +136,11 @@ h6.title {
     transition: width 0.3s ease;
 }
 
+.w-50 {
+    width: 50%;
+    transition: width 0.3s ease;
+}
+
 .w-66 {
     width: 66%;
     transition: width 0.3s ease;

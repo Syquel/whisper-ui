@@ -85,7 +85,7 @@
                         files to be
                         encrypted.</span>
                     <span
-                        x-show="recipientPublicKeys.length > 0 && files.length > 0 && encryptedFiles.length == 0">Geat!
+                        x-show="recipientPublicKeys.length > 0 && files.length > 0 && encryptedFiles.length == 0">Great!
                         You're all set to encrypt
                         some secrets.</span>
                     <span x-show="encryptedFiles.length > 0">Congrats! You successfully
@@ -93,12 +93,13 @@
                 </div>
             </div>
         </div>
-        <div class="pure-u-1 pure-u-lg-1-2" x-show="engineState == CryptoEngineState.Initialized" x-transition>
+        <div class="pure-u-1 pure-u-lg-1-2"
+            x-show="engineState == CryptoEngineState.Initialized && encryptedFiles.length == 0" x-transition>
             <div class="content-box">
                 <h3 class="title">To whom do you want to whisper?</h3>
                 <ul>
                     <template x-for="key in recipientPublicKeys">
-                        <li x-text="key.xKidHint + ' (' + key.kid.slice(0,8) + '...)'"></li>
+                        <li x-text="key.xKidHint + ' (' + shortenTo11(key.kid) + ')'"></li>
                     </template>
                 </ul>
                 <div id="add-recipient-dropzone" class="dropzone">
@@ -109,7 +110,8 @@
             </div>
         </div>
         <div class="pure-u-1 pure-u-lg-1-2"
-            x-show="engineState == CryptoEngineState.Initialized && recipientPublicKeys.length > 0" x-transition>
+            x-show="engineState == CryptoEngineState.Initialized && recipientPublicKeys.length > 0 && encryptedFiles.length == 0"
+            x-transition>
             <div class="content-box">
                 <h3 class="title">What do you want to whisper?</h3>
                 <ul>
@@ -124,7 +126,7 @@
             </div>
         </div>
         <div class="pure-u-1 pure-u-lg-1-2"
-            x-show="engineState == CryptoEngineState.Initialized && recipientPublicKeys.length > 0 && files.length > 0"
+            x-show="engineState == CryptoEngineState.Initialized && recipientPublicKeys.length > 0 && files.length > 0 && encryptedFiles.length == 0"
             x-transition>
             <div class="content-box">
                 <h3 class="title">Ready?</h3>
@@ -155,7 +157,7 @@
                             encrypted files and send them to </span>
                         <ul>
                             <template x-for="key in recipientPublicKeys">
-                                <li x-text="key.xKidHint + ' (' + key.kid.slice(0,8) + '...)'"></li>
+                                <li x-text="key.xKidHint + ' (' + shortenTo11(key.kid) + ')'"></li>
                             </template>
                         </ul>
                     </div>
@@ -164,11 +166,10 @@
                     <template x-for="file in encryptedFiles">
                         <a href="#" class="pure-menu-link selectable-image-container"
                             x-bind:href="'data:application/json;charset=utf-8,' + JSON.stringify(file.jwe)"
-                            x-bind:download="file.name + '-whisper.encypted.json'"
+                            x-bind:download="file.name + FileSuffix.EncryptedFile"
                             x-on:click="$el.classList.add('selected')">
                             <span class="iconify iconify-button" data-icon="mdi-tray-arrow-down"></span><br /><span
-                                class="additional-info"
-                                x-text="file.name.length > 11 ? file.name.slice(0,8) +'...' : file.name"></span></a>
+                                class="additional-info" x-text="shortenTo11(file.name)"></span></a>
                     </template>
                     <a href="#" class="pure-menu-link selectable-image-container" x-on:click="$reset"
                         x-bind:disabled="engineState != CryptoEngineState.Initialized"><span
@@ -181,7 +182,91 @@
 
     <!-- ==================== RECEIVE SCREEN ==================== -->
     <div class="pure-g" x-show="activeScreen == Screen.Receive">
-        Receive
+        <div class="pure-u-1" x-show="engineState != CryptoEngineState.Unknown" x-transition>
+            <div class="content-box">
+                <div class="progress-element"
+                    :class="receivedScreen.decryptedFiles.length > 0 ? 'w-100' : receivedScreen.encryptedFiles.length > 0 ? 'w-50' : 'w-0'">
+                    &nbsp;</div>
+            </div>
+        </div>
+        <!-- Grid components shown side-by-side on big screen or one per row on smaller screens -->
+        <div class="pure-u-1 pure-u-lg-1-2" x-show="engineState != CryptoEngineState.Unknown" x-transition>
+            <div class="content-box">
+                <h3 class="title">Welcome</h3>
+                <div class="box-with-icon-and-text">
+                    <span class="iconify" data-icon="mdi-human-greeting"></span>
+                    <span
+                        x-show="receivedScreen.encryptedFiles.length == 0 && receivedScreen.decryptedFiles.length ==0">Welcome!
+                        In order decypher encypted data sent to you,
+                        please drop at least one file into the box.</span>
+                    <span
+                        x-show="receivedScreen.encryptedFiles.length > 0 && receivedScreen.decryptedFiles.length == 0">Nice!
+                        Now you and only you can decypt the content using your locally stored private key.</span>
+                    <span x-show="receivedScreen.decryptedFiles.length > 0">Great!
+                        The files have been decypted and can be downloaded.</span>
+                </div>
+            </div>
+        </div>
+        <div class="pure-u-1 pure-u-lg-1-2"
+            x-show="engineState == CryptoEngineState.Initialized && receivedScreen.decryptedFiles.length == 0"
+            x-transition>
+            <div class="content-box">
+                <h3 class="title">What have you received?</h3>
+                <ul>
+                    <template x-for="file in receivedScreen.encryptedFiles">
+                        <li x-text="file.name"></li>
+                    </template>
+                </ul>
+                <div id="whisper-received-dropzone" class="dropzone">
+                    <span>Drag & Drop your file(s) to be encrypted or click to open file chooser</span>
+                    <input id="whisper-received-dropzone-input" type="file" name="whisper-files" class="dropzone-input"
+                        multiple>
+                </div>
+            </div>
+        </div>
+        <div class="pure-u-1 pure-u-lg-1-2"
+            x-show="engineState == CryptoEngineState.Initialized && receivedScreen.encryptedFiles.length > 0 && receivedScreen.decryptedFiles.length == 0"
+            x-transition>
+            <div class="content-box">
+                <h3 class="title">Ready?</h3>
+                <div class="box-with-icon-and-text">
+                    <span class="iconify" data-icon="mdi-lock-open-check-outline"></span><span>Your data
+                        will be decrypted locally on your device and is never transmitted to any server!</span>
+                </div>
+                <div class="box-with-icon-and-text">
+                    <a href="#" class="pure-menu-link selectable-image-container" x-on:click="$executeDecryption"
+                        x-bind:disabled="engineState != CryptoEngineState.Initialized"><span
+                            class="iconify iconify-button" data-icon="mdi-check"></span><br /><span
+                            class="additional-info">Go!</span></a>
+                    <a href="#" class="pure-menu-link selectable-image-container" x-on:click="$reset"
+                        x-bind:disabled="engineState != CryptoEngineState.Initialized"><span
+                            class="iconify iconify-button" data-icon="mdi-close"></span><br /><span
+                            class="additional-info">Reset</span></a>
+                </div>
+            </div>
+        </div>
+        <div class="pure-u-1 pure-u-lg-1-2" x-show="receivedScreen.decryptedFiles.length > 0" x-transition>
+            <div class="content-box">
+                <h3 class="title">Complete!</h3>
+                <div class="box-with-icon-and-text">
+                    <span class="iconify" data-icon="mdi-check-circle-outline"></span>
+                    <span>You can download the decrypted files here!</span>
+                </div>
+                <div class="box-with-icon-and-text" style="flex-wrap: wrap;">
+                    <template x-for="file in receivedScreen.decryptedFiles">
+                        <a href="#" class="pure-menu-link selectable-image-container"
+                            x-bind:href="'data:application/octet-stream;base64,'+ file.data" x-bind:download="file.name"
+                            x-on:click="$el.classList.add('selected')">
+                            <span class="iconify iconify-button" data-icon="mdi-tray-arrow-down"></span><br /><span
+                                class="additional-info" x-text="shortenTo11(file.name)"></span></a>
+                    </template>
+                    <a href="#" class="pure-menu-link selectable-image-container" x-on:click="$reset"
+                        x-bind:disabled="engineState != CryptoEngineState.Initialized"><span
+                            class="iconify iconify-button" data-icon="mdi-close"></span><br /><span
+                            class="additional-info">Clear</span></a>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- ==================== YOU SCREEN ==================== -->
@@ -217,7 +302,7 @@
                     <a href="#" class="pure-menu-link selectable-image-container"
                         x-show="personalPublicKey && personalPublicKey.xKidHint"
                         x-bind:href="'data:application/json;charset=utf-8,' + JSON.stringify(personalPublicKey)"
-                        x-bind:download="personalPublicKey?.xKidHint + '-' + personalPublicKey?.kid.slice(0,8) + '-whisper.public.json'"><span
+                        x-bind:download="personalPublicKey?.xKidHint + '-' + personalPublicKey?.kid.slice(0,8) + FileSuffix.PersonalPublicKey"><span
                             class="iconify iconify-button" data-icon="mdi-tray-arrow-down"></span><br /><span
                             class="additional-info" x-text="personalPublicKey?.xKidHint"></span></a>
                 </div>
