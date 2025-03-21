@@ -12,10 +12,9 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-title" content="Whisper!" />
     <link rel="manifest" href="/img/site.webmanifest" />
-
+    <!-- import generated styles from modules -->
     <link rel="stylesheet" href="dist/whisper.css">
-    <!-- https://pictogrammers.com/docs/guides/iconify/ -->
-    <script src="//code.iconify.design/1/1.0.6/iconify.min.js"></script>
+    <link rel="stylesheet" href="dist/mdi-icons.css" />
     <!-- custom styles -->
     <link rel="stylesheet" href="css/styles.css" />
     <!-- the whisper ts/js module-->
@@ -35,26 +34,28 @@
         <ul class="pure-menu-list">
             <li class="pure-menu-item">
                 <a href="#" class="pure-menu-link selectable-image-container"
-                    :class="activeScreen == Screen.Send && 'selected'" x-on:click="activeScreen = Screen.Send"><span
-                        class="iconify iconify-button" data-icon="mdi-call-made"></span><br /><span
+                    :class="activeScreen == Screen.Send && 'selected'" x-on:click="activeScreen = Screen.Send">
+                    <span class="button-icon icon--mdi icon--mdi--call-made"></span><br /><span
                         class="additional-info">Send</span></a>
             </li>
             <li class="pure-menu-item ">
                 <a href="#" class="pure-menu-link selectable-image-container"
                     :class="activeScreen == Screen.Receive && 'selected'"
-                    x-on:click="activeScreen = Screen.Receive"><span class="iconify iconify-button"
-                        data-icon="mdi-call-received"></span><br /><span class="additional-info">Receive</span></a>
+                    x-on:click="activeScreen = Screen.Receive"><span
+                        class="button-icon icon--mdi icon--mdi--call-received"></span><br /><span
+                        class="additional-info">Receive</span></a>
             </li>
             <li class="pure-menu-item">
                 <a href="#" class="pure-menu-link selectable-image-container"
                     :class="activeScreen == Screen.Account && 'selected'"
-                    x-on:click="activeScreen = Screen.Account"><span class="iconify iconify-button"
-                        data-icon="mdi-account-circle-outline"></span><br /><span class="additional-info">You</span></a>
+                    x-on:click="activeScreen = Screen.Account"><span
+                        class="button-icon icon--mdi icon--mdi--account-circle-outline"></span><br /><span
+                        class="additional-info">You</span></a>
             </li>
             <li class="pure-menu-item">
                 <a href="#" class="pure-menu-link selectable-image-container"
                     :class="activeScreen == Screen.Info && 'selected'" x-on:click="activeScreen = Screen.Info"><span
-                        class="iconify iconify-button" data-icon="mdi-information-outline"></span><br /><span
+                        class="button-icon icon--mdi icon--mdi--information-outline"></span><br /><span
                         class="additional-info">Info</span></a>
             </li>
         </ul>
@@ -73,7 +74,7 @@
             <div class="content-box">
                 <h3 class="title">Welcome</h3>
                 <div class="box-with-icon-and-text">
-                    <span class="iconify" data-icon="mdi-human-greeting"></span>
+                    <span class="marker-icon icon--mdi icon--mdi--human-greeting"></span>
                     <span x-show="sendScreen.recipientPublicKeys.length == 0">Welcome! In order to securely send
                         files, please provide add at least one recipient.</span>
                     <span
@@ -128,18 +129,18 @@
             <div class="content-box">
                 <h3 class="title">Ready?</h3>
                 <div class="box-with-icon-and-text">
-                    <span class="iconify" data-icon="mdi-lock-check-outline"></span><span>Your data
+                    <span class="marker-icon icon--mdi icon--mdi--lock-check-outline"></span><span>Your data
                         will be encrypted locally on your device and can only be decrypted by the chosen
                         recipients!</span>
                 </div>
                 <div class="box-with-icon-and-text">
                     <a href="#" class="pure-menu-link selectable-image-container" x-on:click="$executeEncryption"
                         x-bind:disabled="engineState != CryptoEngineState.Initialized"><span
-                            class="iconify iconify-button" data-icon="mdi-check"></span><br /><span
+                            class="button-icon icon--mdi icon--mdi--check"></span><br /><span
                             class="additional-info">Go!</span></a>
                     <a href="#" class="pure-menu-link selectable-image-container" x-on:click="$reset"
                         x-bind:disabled="engineState != CryptoEngineState.Initialized"><span
-                            class="iconify iconify-button" data-icon="mdi-close"></span><br /><span
+                            class="button-icon icon--mdi icon--mdi--close"></span><br /><span
                             class="additional-info">Reset</span></a>
                 </div>
             </div>
@@ -148,7 +149,7 @@
             <div class="content-box">
                 <h3 class="title">Complete!</h3>
                 <div class="box-with-icon-and-text">
-                    <span class="iconify" data-icon="mdi-check-circle-outline"></span>
+                    <span class="marker-icon icon--mdi icon--mdi--check-circle-outline"></span>
                     <div>
                         <span>You can now download the
                             encrypted files and send them to </span>
@@ -165,12 +166,12 @@
                             x-bind:href="'data:application/json;charset=utf-8,' + JSON.stringify(file.jwe)"
                             x-bind:download="file.name + FileSuffix.EncryptedFile"
                             x-on:click="$el.classList.add('selected')">
-                            <span class="iconify iconify-button" data-icon="mdi-tray-arrow-down"></span><br /><span
+                            <span class="button-icon icon--mdi icon--mdi--tray-arrow-down"></span><br /><span
                                 class="additional-info" x-text="shortenTo11(file.name)"></span></a>
                     </template>
                     <a href="#" class="pure-menu-link selectable-image-container" x-on:click="$reset"
                         x-bind:disabled="engineState != CryptoEngineState.Initialized"><span
-                            class="iconify iconify-button" data-icon="mdi-close"></span><br /><span
+                            class="button-icon icon--mdi icon--mdi--close"></span><br /><span
                             class="additional-info">Clear</span></a>
                 </div>
             </div>
@@ -191,7 +192,7 @@
             <div class="content-box">
                 <h3 class="title">Welcome</h3>
                 <div class="box-with-icon-and-text">
-                    <span class="iconify" data-icon="mdi-human-greeting"></span>
+                    <span class="marker-icon icon--mdi icon--mdi--human-greeting"></span>
                     <span
                         x-show="receivedScreen.encryptedFiles.length == 0 && receivedScreen.decryptedFiles.length ==0">Welcome!
                         In order decypher encypted data sent to you,
@@ -227,17 +228,17 @@
             <div class="content-box">
                 <h3 class="title">Ready?</h3>
                 <div class="box-with-icon-and-text">
-                    <span class="iconify" data-icon="mdi-lock-open-check-outline"></span><span>Your data
+                    <span class="marker-icon icon--mdi icon--mdi--lock-open-check-outline"></span><span>Your data
                         will be decrypted locally on your device and is never transmitted to any server!</span>
                 </div>
                 <div class="box-with-icon-and-text">
                     <a href="#" class="pure-menu-link selectable-image-container" x-on:click="$executeDecryption"
                         x-bind:disabled="engineState != CryptoEngineState.Initialized"><span
-                            class="iconify iconify-button" data-icon="mdi-check"></span><br /><span
+                            class="button-icon icon--mdi icon--mdi--check"></span><br /><span
                             class="additional-info">Go!</span></a>
                     <a href="#" class="pure-menu-link selectable-image-container" x-on:click="$reset"
                         x-bind:disabled="engineState != CryptoEngineState.Initialized"><span
-                            class="iconify iconify-button" data-icon="mdi-close"></span><br /><span
+                            class="button-icon icon--mdi icon--mdi--close"></span><br /><span
                             class="additional-info">Reset</span></a>
                 </div>
             </div>
@@ -246,7 +247,7 @@
             <div class="content-box">
                 <h3 class="title">Complete!</h3>
                 <div class="box-with-icon-and-text">
-                    <span class="iconify" data-icon="mdi-check-circle-outline"></span>
+                    <span class="marker-icon icon--mdi icon--mdi--check-circle-outline"></span>
                     <span>You can download the decrypted files here!</span>
                 </div>
                 <div class="box-with-icon-and-text" style="flex-wrap: wrap;">
@@ -254,12 +255,12 @@
                         <a href="#" class="pure-menu-link selectable-image-container"
                             x-bind:href="'data:application/octet-stream;base64,'+ file.data" x-bind:download="file.name"
                             x-on:click="$el.classList.add('selected')">
-                            <span class="iconify iconify-button" data-icon="mdi-tray-arrow-down"></span><br /><span
+                            <span class="button-icon icon--mdi icon--mdi--tray-arrow-down"></span><br /><span
                                 class="additional-info" x-text="shortenTo11(file.name)"></span></a>
                     </template>
                     <a href="#" class="pure-menu-link selectable-image-container" x-on:click="$reset"
                         x-bind:disabled="engineState != CryptoEngineState.Initialized"><span
-                            class="iconify iconify-button" data-icon="mdi-close"></span><br /><span
+                            class="button-icon icon--mdi icon--mdi--close"></span><br /><span
                             class="additional-info">Clear</span></a>
                 </div>
             </div>
@@ -273,7 +274,7 @@
             <div class="content-box">
                 <h3 class="title">Your keys</h3>
                 <div class="box-with-icon-and-text">
-                    <span class="iconify" data-icon="mdi-key-chain"></span>
+                    <span class="marker-icon icon--mdi icon--mdi--key-chain"></span>
                     <div>
                         We have successfully created a keypair
                         for you and stored in in your local browser! You can download the public key here.
@@ -290,8 +291,8 @@
                                 x-on:keydown="$refs.btnHintOk.disabled = !$el.validity.valid"
                                 placeholder="Name or E-Mail" x-model="accountScreen.personalKeyHint" />
                             <button x-ref="btnHintOk" class="pure-button pure-button-primary"
-                                x-on:click="$submitPersonalKeyHint" disabled><span class="iconify"
-                                    data-icon="mdi-check"></span>Ok</button>
+                                x-on:click="$submitPersonalKeyHint" disabled><span
+                                    class="icon--mdi icon--mdi--check"></span>Ok</button>
                         </div>
                     </div>
                 </div>
@@ -300,7 +301,7 @@
                         x-show="personalPublicKey && personalPublicKey.xKidHint"
                         x-bind:href="'data:application/json;charset=utf-8,' + JSON.stringify(personalPublicKey)"
                         x-bind:download="personalPublicKey?.xKidHint + '-' + personalPublicKey?.kid.slice(0,8) + FileSuffix.PersonalPublicKey"><span
-                            class="iconify iconify-button" data-icon="mdi-tray-arrow-down"></span><br /><span
+                            class="button-icon icon--mdi icon--mdi--tray-arrow-down"></span><br /><span
                             class="additional-info" x-text="personalPublicKey?.xKidHint"></span></a>
                 </div>
             </div>
@@ -313,7 +314,7 @@
             <div class="content-box">
                 <h3 class="title">Security of JWE Transmission</h3>
                 <div class="box-with-icon-and-text">
-                    <span class="iconify" data-icon="mdi-security"></span>
+                    <span class="marker-icon icon--mdi icon--mdi--security"></span>
                     <div>
 
                         <h4>Encryption Strength</h4>

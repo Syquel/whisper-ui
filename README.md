@@ -35,8 +35,13 @@ Make it super easy to locally encrypt sensible data for only specific recipients
 some magnificent and lightweigt libraries
 * [jose](https://github.com/panva/jose) library
 * [Pure](https://pure-css.github.io/)
-* [Iconify](https://pictogrammers.com/docs/guides/iconify/)
+* [Iconify](https://pictogrammers.com/docs/guides/iconify/) and [Material Design Icons](https://pictogrammers.com/library/mdi/)
 * [Alpine](https://alpinejs.dev/) for client side magic
+
+Use [Bun](https://bun.sh/) to run build script that compiles icons
+```sh
+bun run ./build/build-iconify.ts
+```
 
 Use [Bun](https://bun.sh/) for on the fly typescript compilation
 ```sh

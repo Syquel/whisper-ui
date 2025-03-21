@@ -5,9 +5,12 @@
     "purecss": "^3.0.0"
   },
   "devDependencies": {
-    "webpack-cli": "^6.0.1",
+    "@iconify/json": "^2.2.319",
+    "@iconify/types": "^2.0.0",
+    "@iconify/utils": "^2.3.0",
     "@types/alpinejs": "^3.13.11",
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "webpack-cli": "^6.0.1"
   },
   "name": "whisper-poc",
   "module": "index.ts",

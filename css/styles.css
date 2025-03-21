@@ -38,7 +38,7 @@ h6.title {
 }
 
 /* Create large buttons with icons */
-.iconify-button {
+.button-icon {
     font-size: 2rem;
 }
 
@@ -69,20 +69,16 @@ h6.title {
     color: gray;
 }
 
-/** div to put a larger iconify icon span and a text ´ */
+/** div to put a larger marker icon and a text ´ */
 .box-with-icon-and-text {
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.box-with-icon-and-text>.iconify {
+.box-with-icon-and-text>.marker-icon {
     min-width: 10%;
     font-size: 3rem;
-}
-
-.box-with-icon-and-text>a>.iconify {
-    margin: 1rem;
 }
 
 .selectable-image-container {
