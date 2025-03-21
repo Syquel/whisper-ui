@@ -2,7 +2,8 @@
   "dependencies": {
     "@types/alpinejs": "^3.13.11",
     "alpinejs": "^3.14.9",
-    "jose": "^6.0.10"
+    "jose": "^6.0.10",
+    "purecss": "^3.0.0"
   },
   "devDependencies": {
     "webpack-cli": "^6.0.1",

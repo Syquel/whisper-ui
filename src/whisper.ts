@@ -1,8 +1,15 @@
+// Alpine for client side UI magic https://alpinejs.dev/
+import Alpine from 'alpinejs'
+// https://github.com/panva/jose for JWK and JWE support
+import { JWK, GeneralJWE } from 'jose'
+// Bundle PureCss https://pure-css.github.io/start/
+import 'purecss/build/pure-min.css';
+import 'purecss/build/grids-responsive.css';
+// Whisper crypto module
 import * as crypto from './whisper-crypto'
 import { JWKWithKeyHint, JWKPair } from './whisper-crypto'
+// Drag'n'drop handling
 import * as dropzone from './whisper-dropzone'
-import Alpine from 'alpinejs'
-import { JWK, GeneralJWE } from 'jose'
 
 // Call default module exports, provide listeners
 crypto.default(keysAvailable)
@@ -108,16 +115,16 @@ function keysAvailable(personalKeyPair: JWKPair) {
 // Reset states in order to start over
 function reset() {
     const store = (Alpine.store(whisperStateStoreName) as Store)
-    
+
     // Reset send screen
     store.sendScreen.recipientPublicKeys.length = 0;
     store.sendScreen.filesToEncrypt.length = 0;
     store.sendScreen.encryptedFiles.length = 0;
-    
+
     // Reset Received Screen
     store.receivedScreen.encryptedFiles.length = 0;
     store.receivedScreen.decryptedFiles.length = 0;
-    
+
     // Reset Account Screen
     store.accountScreen.personalKeyHint = '';
 
