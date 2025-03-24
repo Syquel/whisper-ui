@@ -209,5 +209,9 @@ function shortenTo11(input: string): string {
 }
 
 function base64(data: Uint8Array): string {
-    return btoa(String.fromCharCode(...data));
+    let binary = "";
+    data.forEach((byte) => {
+        binary += String.fromCharCode(byte);
+    });
+    return btoa(binary);
 }
