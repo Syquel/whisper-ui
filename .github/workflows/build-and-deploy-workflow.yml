@@ -1,0 +1,72 @@
+name: Build Whisper! App
+# Run build on all branches and tags
+on:
+  push:
+    branches:
+    - '**'
+    tags:
+    - '**'
+
+jobs:
+  # Prepares Bun, builds the application files
+  # and copies everything to bundle/
+  prepare-and-build:
+    runs-on: ubuntu-latest
+    name: Prepare Bun and build application
+    outputs:
+      sha_short: ${{ steps.vars.outputs.sha_short }}
+    steps: 
+      - uses: actions/checkout@v4
+      - name: Set sha_short as identification
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: install dependencies
+        run: bun install
+      - name: build code
+        run: bun build src/* --outdir dist --minify
+      - name: build incons
+        run: bun run ./build/build-iconify.ts
+      - name: bundle
+        run: |
+          mkdir bundle/
+          cp -R dist bundle/
+          cp -R img bundle/
+          cp -R css bundle/
+          cp index.html bundle/
+      - name: Upload build artifact
+        uses:  actions/upload-artifact@v4
+        with:
+          name: whisper-bundle
+          path: bundle/
+  # Deploys the bundle build of the main branch to pgs-qa project
+  # linked to whisper.qa.syncorix.com
+  # See https://github.com/picosh/pgs-action
+  deploy-to-pgs-qa:
+    runs-on: ubuntu-latest
+    name: Deploy bundle to pgs.sh (QA)
+    needs: prepare-and-build
+    if: github.ref_name	 == 'main'
+    steps: 
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: whisper-bundle
+      - name: publish to pgs
+        uses: picosh/pgs-action@v3
+        with: 
+          user: syncorix 
+          key: ${{ secrets.SYNCORIX_PICO_GITHUB_PKEY }}
+          # trailing slash is important (we use rsync)
+          src: './'
+          # create a new project on-the-fly using git commit hash
+          project: 'syncorix-whisper-build-${{ needs.prepare-and-build.outputs.sha_short }}'
+          # once the files have been uploaded to the project above, promote the
+          # production project by symbolically linking to the project we just created
+          promote: 'syncorix-whisper-qa'
+          # keep the latest (N) updated projects matching prefix provided and delete the rest
+          retain: 'syncorix-whisper-build-'
+          # retention policy: num of recently updated projects to keep
+          retain_num: 0
