@@ -1,14 +1,14 @@
 # whisper-ui
-![](img/whisper.png) Secure and very easy to use sending of encrypted data anywhere (browser ui)
+![](img-doc/whisper.png) Secure and very easy to use sending of encrypted data anywhere (browser ui)
 
 ## idea
 Make it super easy to locally encrypt sensible data for only specific recipients ensuring privacy, integrity and compliance on whatever way the data is transported.
 
 ### Create and encrypt locally in you browser
-![](img/create-whisper.png)
+![](img-doc/create-whisper.png)
 
 ### Receive and decrpt locally in your browser
-![](img/receive-whisper.png)
+![](img-doc/receive-whisper.png)
 
 ## Features (free)
 * A keypair is automatically generated locally and stored in the browser's IndexedDB

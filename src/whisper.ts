@@ -16,7 +16,7 @@ crypto.default(keysAvailable)
 dropzone.default([whisperFilesAdded], [recipientKeysAdded], [receivedWhisperFilesAdded])
 
 // Screens selectable per menu
-export enum Screen {
+export enum WhisperScreen {
     Send,
     Receive,
     Account,
@@ -25,7 +25,7 @@ export enum Screen {
 // State of the crypto modules and key availability
 export enum CryptoEngineState {
     // Engine has not been initialized and maybe never will if brwoser doesn't support it
-    Unkwown,
+    Unknown,
     // Engine is intialized and can be used
     Initialized
 }
@@ -37,7 +37,7 @@ export enum FileSuffix {
 // Add to window to be usable from inline JS in Alpine
 // https://alpinejs.dev/essentials/installation#as-a-module
 window.Alpine = Alpine;
-window.Screen = Screen;
+window.WhisperScreen = WhisperScreen;
 window.CryptoEngineState = CryptoEngineState;
 window.FileSuffix = FileSuffix;
 
@@ -65,7 +65,7 @@ type AccountScreen = {
 }
 // type of local "session" object
 type Store = {
-    activeScreen: Screen;
+    activeScreen: WhisperScreen;
     engineState: CryptoEngineState;
     personalPublicKey: JWKWithKeyHint | null;
     personalPrivateKey: JWK | null;
@@ -76,8 +76,8 @@ type Store = {
 };
 // instance of local "session" containing all info to be dynamically updated by alpine
 const store: Store = {
-    activeScreen: Screen.Send,
-    engineState: CryptoEngineState.Unkwown,
+    activeScreen: WhisperScreen.Send,
+    engineState: CryptoEngineState.Unknown,
     personalPublicKey: null,
     personalPrivateKey: null,
     sendScreen: {

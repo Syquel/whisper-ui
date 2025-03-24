@@ -14,11 +14,13 @@ const chosenIcons: Array<string> = [
     'check-circle-outline',
     'check',
     'close',
+    'github',
     'human-greeting',
     'information-outline',
     'key-chain',
     'lock-check-outline',
     'lock-open-check-outline',
+    'robot-dead',
     'security',
     'tray-arrow-down',
 ];

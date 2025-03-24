@@ -6,12 +6,12 @@
     <title>Whisper!</title>
 
     <!-- manifest and favicon stuff -->
-    <link rel="icon" type="image/png" href="/img/favicon-96x96.png" sizes="96x96" />
-    <link rel="icon" type="image/svg+xml" href="/img/favicon.svg" />
-    <link rel="shortcut icon" href="/img/favicon.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href="img/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="img/favicon.svg" />
+    <link rel="shortcut icon" href="img/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-title" content="Whisper!" />
-    <link rel="manifest" href="/img/site.webmanifest" />
+    <link rel="manifest" href="img/site.webmanifest" />
     <!-- import generated styles from modules -->
     <link rel="stylesheet" href="dist/whisper.css">
     <link rel="stylesheet" href="dist/mdi-icons.css" />
@@ -34,34 +34,71 @@
         <ul class="pure-menu-list">
             <li class="pure-menu-item">
                 <a href="#" class="pure-menu-link selectable-image-container"
-                    :class="activeScreen == Screen.Send && 'selected'" x-on:click="activeScreen = Screen.Send">
+                    :class="activeScreen == WhisperScreen.Send && 'selected'"
+                    x-on:click="activeScreen = WhisperScreen.Send">
                     <span class="button-icon icon--mdi icon--mdi--call-made"></span><br /><span
                         class="additional-info">Send</span></a>
             </li>
             <li class="pure-menu-item ">
                 <a href="#" class="pure-menu-link selectable-image-container"
-                    :class="activeScreen == Screen.Receive && 'selected'"
-                    x-on:click="activeScreen = Screen.Receive"><span
+                    :class="activeScreen == WhisperScreen.Receive && 'selected'"
+                    x-on:click="activeScreen = WhisperScreen.Receive"><span
                         class="button-icon icon--mdi icon--mdi--call-received"></span><br /><span
                         class="additional-info">Receive</span></a>
             </li>
             <li class="pure-menu-item">
                 <a href="#" class="pure-menu-link selectable-image-container"
-                    :class="activeScreen == Screen.Account && 'selected'"
-                    x-on:click="activeScreen = Screen.Account"><span
+                    :class="activeScreen == WhisperScreen.Account && 'selected'"
+                    x-on:click="activeScreen = WhisperScreen.Account"><span
                         class="button-icon icon--mdi icon--mdi--account-circle-outline"></span><br /><span
                         class="additional-info">You</span></a>
             </li>
             <li class="pure-menu-item">
                 <a href="#" class="pure-menu-link selectable-image-container"
-                    :class="activeScreen == Screen.Info && 'selected'" x-on:click="activeScreen = Screen.Info"><span
+                    :class="activeScreen == WhisperScreen.Info && 'selected'"
+                    x-on:click="activeScreen = WhisperScreen.Info"><span
                         class="button-icon icon--mdi icon--mdi--information-outline"></span><br /><span
                         class="additional-info">Info</span></a>
             </li>
+            <li class="pure-menu-item">
+                <a href="https://github.com/syncorix-com/whisper-ui"
+                    class="pure-menu-link selectable-image-container"><span
+                        class="button-icon icon--mdi icon--mdi--github"></span><br /><span
+                        class="additional-info">GitHub</span></a>
+            </li>
         </ul>
     </div>
-    <div class="pure-g" x-show="activeScreen == Screen.Send">
-        <!-- ==================== SEND SCREEN ==================== -->
+    <div class="pure-g" x-transition>
+        <div class="pure-u-1 content-box additional-info">
+            <div class="box-with-icon-and-text">
+                <span class="marker-icon icon--mdi icon--mdi--information-outline"></span>
+                <div>
+                    This software is functional
+                    but still under development and testing. Use at your own risk. Want something
+                    like this with your company branding, custom hosting, key synchronisation and more features? <a
+                        href="https://syncorix.com/#contact">Get in touch!</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== NOT SUPPORTED INFO ==================== -->
+    <div class="pure-g" x-show="engineState == CryptoEngineState.Unknown" x-transition>
+        <div class="pure-u-1">
+            <div class="content-box">
+                <h3 class="title">D'Oh!</h3>
+                <div class="box-with-icon-and-text">
+                    <span class="marker-icon icon--mdi icon--mdi--robot-dead"></span>
+                    <span x-show="sendScreen.recipientPublicKeys.length == 0">Sorry, this browser does not seem to
+                        support <a href="https://w3c.github.io/webcrypto/">Web Cryptography API</a> and the P-256
+                        elliptic curve.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SEND SCREEN ==================== -->
+    <div class="pure-g" x-show="engineState != CryptoEngineState.Unknown && activeScreen == WhisperScreen.Send">
         <div class="pure-u-1" x-show="engineState != CryptoEngineState.Unknown" x-transition>
             <div class="content-box">
                 <div class="progress-element"
@@ -76,7 +113,7 @@
                 <div class="box-with-icon-and-text">
                     <span class="marker-icon icon--mdi icon--mdi--human-greeting"></span>
                     <span x-show="sendScreen.recipientPublicKeys.length == 0">Welcome! In order to securely send
-                        files, please provide add at least one recipient.</span>
+                        files, please provide one or more recipient.</span>
                     <span
                         x-show="sendScreen.recipientPublicKeys.length > 0 && sendScreen.filesToEncrypt.length == 0 && sendScreen.encryptedFiles.length == 0">Nice!
                         Now please add one or more
@@ -101,7 +138,7 @@
                     </template>
                 </ul>
                 <div id="add-recipient-dropzone" class="dropzone">
-                    <span>Drag & Drop your recipient keys or click to open file chooser</span>
+                    <span>Drag & Drop your recipient key(s) or click to open file chooser</span>
                     <input id="add-recipient-dropzone-input" type="file" name="recipient-files" class="dropzone-input"
                         multiple>
                 </div>
@@ -179,7 +216,7 @@
     </div>
 
     <!-- ==================== RECEIVE SCREEN ==================== -->
-    <div class="pure-g" x-show="activeScreen == Screen.Receive">
+    <div class="pure-g" x-show="engineState != CryptoEngineState.Unknown && activeScreen == WhisperScreen.Receive">
         <div class="pure-u-1" x-show="engineState != CryptoEngineState.Unknown" x-transition>
             <div class="content-box">
                 <div class="progress-element"
@@ -195,8 +232,8 @@
                     <span class="marker-icon icon--mdi icon--mdi--human-greeting"></span>
                     <span
                         x-show="receivedScreen.encryptedFiles.length == 0 && receivedScreen.decryptedFiles.length ==0">Welcome!
-                        In order decypher encypted data sent to you,
-                        please drop at least one file into the box.</span>
+                        In order to decypher encypted data that has been sent sent to you, please drop at least one
+                        file into the box.</span>
                     <span
                         x-show="receivedScreen.encryptedFiles.length > 0 && receivedScreen.decryptedFiles.length == 0">Nice!
                         Now you and only you can decypt the content using your locally stored private key.</span>
@@ -268,18 +305,17 @@
     </div>
 
     <!-- ==================== YOU / ACCOUNT SCREEN ==================== -->
-    <div class="pure-g" x-show="activeScreen == Screen.Account">
-        <div class="pure-u-1"
-            x-show="engineState != CryptoEngineState.Unknown && personalPublicKey && personalPrivateKey">
+    <div class="pure-g"
+        x-show="engineState != CryptoEngineState.Unknown && personalPublicKey && personalPrivateKey && activeScreen == WhisperScreen.Account">
+        <div class="pure-u-1">
             <div class="content-box">
                 <h3 class="title">Your keys</h3>
                 <div class="box-with-icon-and-text">
                     <span class="marker-icon icon--mdi icon--mdi--key-chain"></span>
                     <div>
-                        We have successfully created a keypair
-                        for you and stored in in your local browser! You can download the public key here.
-                        This
-                        one is no secret and can be sent to anyone you want to receive whispers from.
+                        We have successfully created a keypair for you and stored it in your local browser! You can
+                        download the public key here. It is no secret and can be sent to anyone you want to receive
+                        whispers from.
                         <div x-show="personalPublicKey && !personalPublicKey.xKidHint" style="margin-top: 0.5rem;">
                             Before downloading and distributing your key, please provide some info on who you might
                             be, like Name or E-Mail to help senders using it.
@@ -309,62 +345,221 @@
     </div>
 
     <!-- ==================== INFO SCREEN ==================== -->
-    <div class="pure-g" x-show="activeScreen == Screen.Info">
+    <div class="pure-g" x-show="activeScreen == WhisperScreen.Info">
         <div class="pure-u-1">
             <div class="content-box">
-                <h3 class="title">Security of JWE Transmission</h3>
+                <h3 class="title">About Whisper!</h3>
+                <div class="box-with-icon-and-text">
+                    <span class="marker-icon icon--mdi icon--mdi--information-outline"></span>
+                    <div>
+                        Whisper! was created by <a href="https://syncorix.com">Syncorix</a> in order to securely
+                        exchange sensitive data with others. It
+                        runs in your browser and does not transmit data to us. In order to make it available on the
+                        internet, it needs to be hosted. We chose our hosters with regard to privacy.
+                        <br />
+                        Please also see
+                        <ul>
+                            <li> <a href="https://syncorix.com/#imprint">imprint</a></li>
+                            <li> <a href="https://syncorix.com/#privacy">privacy</a></li>
+                        </ul>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="pure-u-1">
+            <div class="content-box">
+                <h3 class="title">Security of Transmission</h3>
                 <div class="box-with-icon-and-text">
                     <span class="marker-icon icon--mdi icon--mdi--security"></span>
                     <div>
-
                         <h4>Encryption Strength</h4>
-                        JWE uses strong encryption algorithms (e.g., AES-GCM for content encryption and RSA
-                        or
-                        ECDH for key encryption). These algorithms ensure that the payload remains confidential and
-                        tamper-proof.
+                        Whisper! uses JWE with strong encryption algorithms (e.g. AES-256-GCM for content encryption
+                        and P-256 Elliptic Curve for keys). These algorithms ensure that the payload remains
+                        confidential and tamper-proof.
 
                         <h4>Hybrid Encryption</h4>
                         JWE employs hybrid encryption, where:
                         <ul>
-                            <li>A symmetric Content Encryption Key (CEK) is generated for encrypting the payload.</li>
-                            <li>The CEK is encrypted for each recipient using their public key (asymmetric encryption).
+                            <li>A symmetric Content Encryption Key (CEK) is generated for encrypting the payload.
                             </li>
-                            <li>This ensures that only recipients with the corresponding private key can decrypt the CEK
-                                and
-                                access
-                                the
-                                payload.</li>
+                            <li>The CEK is encrypted for each recipient using their public key (asymmetric
+                                encryption).
+                            </li>
+                            <li>This ensures that only recipients with the corresponding private key can decrypt the
+                                CEK and access the payload.</li>
                         </ul>
 
                         <h4>Integrity Protection</h4>
-                        JWE includes an authentication tag (e.g., in AES-GCM) to ensure that the
-                        ciphertext has not been tampered with during transmission.
+                        JWE includes an authentication tag (e.g. in AES-GCM) to ensure that the ciphertext has not
+                        been
+                        tampered with during transmission.
                         <h4>Conclusion</h4>
                         JWE is a highly secure mechanism for transmitting sensitive data over insecure channels,
-                        provided
-                        that:
+                        provided that:
                         <ul>
                             <li>Private keys are kept confidential.</li>
                             <li>Strong algorithms (like ECDH-ES+A256KW for key wrapping and A256GCM for content
-                                encryption)
-                                are
-                                used.</li>
+                                encryption) are used.</li>
                             <li>Libraries are kept up to date to mitigate known vulnerabilities.</li>
                         </ul>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="pure-u-1 pure-u-lg-1-2" x-show="engineState != CryptoEngineState.Unknown && personalPublicKey">
+        <div class="pure-u-1">
             <div class="content-box">
-                <h3 class="title">Personal public key info (debugging)</h3>
-                <div x-text="JSON.stringify(personalPublicKey)" class="additional-info"></div>
+                <h3 class="title">License: whisper-ui (this software) <a
+                        href="https://github.com/syncorix-com/whisper-ui"><span
+                            class="marker-icon icon--mdi icon--mdi--github"></span></a></h3>
+                <pre>
+MIT License
+
+Copyright (c) 2025 Syncorix GmbH (syncorix.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+    </pre>
             </div>
         </div>
-        <div class="pure-u-1 pure-u-lg-1-2" x-show="engineState != CryptoEngineState.Unknown && personalPrivateKey">
+        <div class="pure-u-1 pure-u-lg-1-2">
             <div class="content-box">
-                <h3 class="title">Personal private key info (debugging)</h3>
-                <div x-text="JSON.stringify(personalPrivateKey)" class="additional-info"></div>
+                <h3 class="title">License: jose <a href="https://github.com/panva/jose"><span
+                            class="marker-icon icon--mdi icon--mdi--github"></span></a></h3>
+                <pre>
+The MIT License (MIT)
+
+Copyright (c) 2018 Filip Skokan
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this
+software and associated documentation files (the "Software"), to deal in the Software
+without restriction, including without limitation the rights to use, copy, modify,
+merge,
+publish, distribute, sublicense, and/or sell copies of the Software, and to permit
+persons
+to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE
+FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+                            </pre>
+            </div>
+        </div>
+        <div class="pure-u-1 pure-u-lg-1-2">
+            <div class="content-box">
+                <h3 class="title">License: pure <a href="https://github.com/pure-css/pure"><span
+                            class="marker-icon icon--mdi icon--mdi--github"></span></a></h3>
+                <pre>
+Software License Agreement (BSD License)
+========================================
+
+Copyright 2013 Yahoo! Inc.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright
+        notice, this list of conditions and the following disclaimer.
+
+    * Redistributions in binary form must reproduce the above copyright
+        notice, this list of conditions and the following disclaimer in the
+        documentation and/or other materials provided with the distribution.
+
+    * Neither the name of the Yahoo! Inc. nor the
+        names of its contributors may be used to endorse or promote products
+        derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL YAHOO! INC. BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+                        </pre>
+            </div>
+        </div>
+        <div class="pure-u-1 pure-u-lg-1-2">
+            <div class="content-box">
+                <h3 class="title">License: Material Design Icons <a
+                        href="https://github.com/Templarian/MaterialDesign"><span
+                            class="marker-icon icon--mdi icon--mdi--github"></span></a></h3>
+                <pre>
+Pictogrammers Free License
+--------------------------
+
+This icon collection is released as free, open source, and GPL friendly by
+the [Pictogrammers](http://pictogrammers.com/) icon group. You may use it
+for commercial projects, open source projects, or anything really.
+
+# Icons: Apache 2.0 (https://www.apache.org/licenses/LICENSE-2.0)
+Some of the icons are redistributed under the Apache 2.0 license. All other
+icons are either redistributed under their respective licenses or are
+distributed under the Apache 2.0 license.
+
+# Fonts: Apache 2.0 (https://www.apache.org/licenses/LICENSE-2.0)
+All web and desktop fonts are distributed under the Apache 2.0 license. Web
+and desktop fonts contain some icons that are redistributed under the Apache
+2.0 license. All other icons are either redistributed under their respective
+licenses or are distributed under the Apache 2.0 license.
+
+# Code: MIT (https://opensource.org/licenses/MIT)
+The MIT license applies to all non-font and non-icon files.
+                </pre>
+            </div>
+        </div>
+        <div class="pure-u-1 pure-u-lg-1-2">
+            <div class="content-box">
+                <h3 class="title">License: Alpine.js <a href="https://github.com/alpinejs/alpine"><span
+                            class="marker-icon icon--mdi icon--mdi--github"></span></a></h3>
+                <pre>
+# MIT License
+
+Copyright © 2019-2021 Caleb Porzio and contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+                </pre>
             </div>
         </div>
     </div>
