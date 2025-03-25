@@ -15,11 +15,22 @@ jobs:
     name: Prepare Bun and build application
     outputs:
       sha_short: ${{ steps.vars.outputs.sha_short }}
+      is_release_tag: ${{ steps.taginfo.outputs.is_release_tag }}
     steps: 
       - uses: actions/checkout@v4
       - name: Set sha_short as identification
         id: vars
         run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      - name: Detect release tag
+        id: taginfo
+        run: |
+          pattern="^[0-9]+\.[0-9]+\.[0-9]+.*"
+          if [[ "${{ github.ref_type }}" == "tag" && "${{ github.ref_name }}" =~ $pattern ]]; then
+              echo "${{ github.ref_name }} seems to be a release tag!"
+              echo "is_release_tag=true" >> $GITHUB_OUTPUT
+          else
+              echo "${{ github.ref_name }} does not seem to be a release tag!"
+          fi
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
@@ -41,6 +52,35 @@ jobs:
         with:
           name: whisper-bundle
           path: bundle/
+    # Deploys the bundle build of any non-main branch to pgs-te project
+  # linked to whisper.te.syncorix.com
+  # See https://github.com/picosh/pgs-action
+  deploy-to-pgs-te:
+    runs-on: ubuntu-latest
+    name: Deploy bundle to pgs.sh (TE)
+    needs: prepare-and-build
+    if: github.ref_type	== 'branch' && github.ref_name	!= 'main'
+    steps: 
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: whisper-bundle
+      - name: publish to pgs
+        uses: picosh/pgs-action@v3
+        with: 
+          user: syncorix 
+          key: ${{ secrets.SYNCORIX_PICO_GITHUB_PKEY }}
+          # trailing slash is important (we use rsync)
+          src: './'
+          # create a new project on-the-fly using git commit hash
+          project: 'syncorix-whisper-build-te-${{ needs.prepare-and-build.outputs.sha_short }}'
+          # once the files have been uploaded to the project above, promote the
+          # production project by symbolically linking to the project we just created
+          promote: 'syncorix-whisper-te'
+          # keep the latest (N) updated projects matching prefix provided and delete the rest
+          retain: 'syncorix-whisper-build-te'
+          # retention policy: num of recently updated projects to keep
+          retain_num: 0
   # Deploys the bundle build of the main branch to pgs-qa project
   # linked to whisper.qa.syncorix.com
   # See https://github.com/picosh/pgs-action
@@ -62,11 +102,40 @@ jobs:
           # trailing slash is important (we use rsync)
           src: './'
           # create a new project on-the-fly using git commit hash
-          project: 'syncorix-whisper-build-${{ needs.prepare-and-build.outputs.sha_short }}'
+          project: 'syncorix-whisper-build-qa-${{ needs.prepare-and-build.outputs.sha_short }}'
           # once the files have been uploaded to the project above, promote the
           # production project by symbolically linking to the project we just created
           promote: 'syncorix-whisper-qa'
           # keep the latest (N) updated projects matching prefix provided and delete the rest
-          retain: 'syncorix-whisper-build-'
+          retain: 'syncorix-whisper-build-qa'
+          # retention policy: num of recently updated projects to keep
+          retain_num: 0
+  # Deploys the bundle build of release tags to pgs-live project
+  # linked to whisper.qa.syncorix.com
+  # See https://github.com/picosh/pgs-action
+  deploy-to-pgs-live:
+    runs-on: ubuntu-latest
+    name: Deploy bundle to pgs.sh (QA)
+    needs: prepare-and-build
+    if: github.ref_type	== 'tag' && needs.prepare-and-build.outputs.sha_short == 'true'
+    steps: 
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: whisper-bundle
+      - name: publish to pgs
+        uses: picosh/pgs-action@v3
+        with: 
+          user: syncorix 
+          key: ${{ secrets.SYNCORIX_PICO_GITHUB_PKEY }}
+          # trailing slash is important (we use rsync)
+          src: './'
+          # create a new project on-the-fly using git commit hash
+          project: 'syncorix-whisper-build-live-${{ needs.prepare-and-build.outputs.sha_short }}'
+          # once the files have been uploaded to the project above, promote the
+          # production project by symbolically linking to the project we just created
+          promote: 'syncorix-whisper-live'
+          # keep the latest (N) updated projects matching prefix provided and delete the rest
+          retain: 'syncorix-whisper-build-live'
           # retention policy: num of recently updated projects to keep
           retain_num: 0
