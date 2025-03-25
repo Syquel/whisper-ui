@@ -40,9 +40,20 @@ jobs:
         run: bun build src/* --outdir dist --minify
       - name: build incons
         run: bun run ./build/build-iconify.ts
-      - name: bundle
+        # https://pico.sh/pgs#-headers
+      - name: Add security headers for pgs.sh
         run: |
           mkdir bundle/
+          target=bundle/_headers
+          echo "/*" >> $target
+          echo "  Strict-Transport-Security: max-age=31536000; includeSubDomains" >> $target
+          echo "  Content-Security-Policy: script-src 'self' 'unsafe-eval'" >> $target
+          echo "  X-Frame-Options: SAMEORIGIN" >> $target
+          echo "  Referrer-Policy: same-origin" >> $target
+          echo "  Permissions-Policy: geolocation=(), camera=(), microphone=()" >> $target
+          echo "  X-Content-Type-Options: nosniff" >> $target
+      - name: bundle
+        run: |
           cp -R dist bundle/
           cp -R img bundle/
           cp -R css bundle/
@@ -111,11 +122,11 @@ jobs:
           # retention policy: num of recently updated projects to keep
           retain_num: 0
   # Deploys the bundle build of release tags to pgs-live project
-  # linked to whisper.qa.syncorix.com
+  # linked to whisper.syncorix.com
   # See https://github.com/picosh/pgs-action
   deploy-to-pgs-live:
     runs-on: ubuntu-latest
-    name: Deploy bundle to pgs.sh (QA)
+    name: Deploy bundle to pgs.sh (LIVE)
     needs: prepare-and-build
     if: github.ref_type	== 'tag' && needs.prepare-and-build.outputs.sha_short == 'true'
     steps: 
