@@ -10,6 +10,8 @@ import * as crypto from './whisper-crypto'
 import { JWKWithKeyHint, JWKPair } from './whisper-crypto'
 // Drag'n'drop handling
 import * as dropzone from './whisper-dropzone'
+// Build info
+import { softwareVersion} from './build-info'
 
 // Call default module exports, provide listeners
 crypto.default(keysAvailable)
@@ -72,6 +74,7 @@ type Store = {
     sendScreen: SendScreen;
     receivedScreen: ReceivedScreen;
     accountScreen: AccountScreen;
+    appVersion: string;
     shortenTo11(input: string): string;
 };
 // instance of local "session" containing all info to be dynamically updated by alpine
@@ -92,6 +95,7 @@ const store: Store = {
     accountScreen: {
         personalKeyHint: '',
     },
+    appVersion: softwareVersion,
     shortenTo11: shortenTo11
 }
 // Register store with alpine

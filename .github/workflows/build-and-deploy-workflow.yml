@@ -31,6 +31,16 @@ jobs:
           else
               echo "${{ github.ref_name }} does not seem to be a release tag!"
           fi
+      - name: Update build-info
+        run: |
+          replacement=unknown
+          if [[ "${{ steps.taginfo.outputs.is_release_tag }}" == "true" ]]; then
+            replacement="${{ github.ref_name }}"
+          else
+            replacement="${{ steps.vars.outputs.sha_short }}"
+          fi 
+          echo "${replacement} will be used as version in build-info"
+          sed -i "s/__dev/${replacement}/g" src/build-info.ts
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
