@@ -76,7 +76,7 @@ type Store = {
 };
 // instance of local "session" containing all info to be dynamically updated by alpine
 const store: Store = {
-    activeScreen: WhisperScreen.Send,
+    activeScreen: WhisperScreen.Account,
     engineState: CryptoEngineState.Unknown,
     personalPublicKey: null,
     personalPrivateKey: null,
