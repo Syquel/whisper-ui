@@ -313,13 +313,20 @@
                 <div class="box-with-icon-and-text">
                     <span class="marker-icon icon--mdi icon--mdi--key-chain"></span>
                     <div>
-                        We have successfully created a keypair for you and stored it in your local browser! You can
-                        download the public key here. It is no secret and can be sent to anyone you want to receive
-                        whispers from.
-                        <div x-show="personalPublicKey && !personalPublicKey.xKidHint" style="margin-top: 0.5rem;">
+                        <p>
+                            We have successfully created a keypair for you and stored it in your local browser! You can
+                            download the public key here. It is no secret and can be sent to anyone you want to receive
+                            whispers from.
+                        </p>
+                        <p x-show="personalPublicKey && personalPublicKey.xKidHint">
+                            Please note that if you clear your browser data for this site, existing keys <u>will be
+                                lost</u> and new keys will be generated. This is by design, please ensure that senders
+                            have your latest public key file.
+                        </p>
+                        <p x-show="personalPublicKey && !personalPublicKey.xKidHint">
                             Before downloading and distributing your key, please provide some info on who you might
                             be, like Name or E-Mail to help senders using it.
-                        </div>
+                        </p>
                         <div class="pure-form pure-form-aligned"
                             x-show="personalPublicKey && !personalPublicKey.xKidHint">
                             <label for="key-id-hint">Hint about you identity</label>
