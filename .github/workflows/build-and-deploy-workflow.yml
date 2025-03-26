@@ -138,7 +138,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Deploy bundle to pgs.sh (LIVE)
     needs: prepare-and-build
-    if: github.ref_type	== 'tag' && needs.prepare-and-build.outputs.sha_short == 'true'
+    if: github.ref_type	== 'tag' && needs.prepare-and-build.outputs.is_release_tag == 'true'
     steps: 
       - name: Download build artifact
         uses: actions/download-artifact@v4
