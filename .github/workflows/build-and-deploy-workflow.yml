@@ -46,6 +46,8 @@ jobs:
           bun-version: latest
       - name: install dependencies
         run: bun install
+      - name: lint sources
+        run: bun run eslint src/
       - name: build code
         run: bun build src/* --outdir dist --minify
       - name: build incons

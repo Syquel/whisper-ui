@@ -10,6 +10,7 @@
     "@iconify/utils": "^2.3.0",
     "@types/alpinejs": "^3.13.11",
     "@types/bun": "latest",
+    "typescript-eslint": "^8.28.0",
     "webpack-cli": "^6.0.1"
   },
   "name": "whisper-poc",
