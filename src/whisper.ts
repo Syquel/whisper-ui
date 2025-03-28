@@ -45,28 +45,28 @@ window.FileSuffix = FileSuffix;
 
 // Alpine configuration, create a store for Alpine to react on
 const whisperStateStoreName = "whisperState" // TODO: Is a single store sufficient and good practice?
-type EncryptedFile = {
+interface EncryptedFile {
     name: string;
     jwe: GeneralJWE;
 }
-type DecryptedFile = {
+interface DecryptedFile {
     name: string;
     data: string; // base64
 }
-type SendScreen = {
-    recipientPublicKeys: Array<JWKWithKeyHint>;
-    filesToEncrypt: Array<File>;
-    encryptedFiles: Array<EncryptedFile>;
+interface SendScreen {
+    recipientPublicKeys: JWKWithKeyHint[];
+    filesToEncrypt: File[];
+    encryptedFiles: EncryptedFile[];
 }
-type ReceivedScreen = {
-    encryptedFiles: Array<EncryptedFile>;
-    decryptedFiles: Array<DecryptedFile>;
+interface ReceivedScreen {
+    encryptedFiles: EncryptedFile[];
+    decryptedFiles: DecryptedFile[];
 }
-type AccountScreen = {
+interface AccountScreen {
     personalKeyHint: string;
 }
 // type of local "session" object
-type Store = {
+interface Store {
     activeScreen: WhisperScreen;
     engineState: CryptoEngineState;
     personalPublicKey: JWKWithKeyHint | null;
@@ -76,7 +76,7 @@ type Store = {
     accountScreen: AccountScreen;
     appVersion: string;
     shortenTo11(input: string): string;
-};
+}
 // instance of local "session" containing all info to be dynamically updated by alpine
 const store: Store = {
     activeScreen: WhisperScreen.Account,
@@ -148,12 +148,12 @@ function submitPersonalKeyHint() {
     }
 }
 
-function whisperFilesAdded(files: Array<File>) {
+function whisperFilesAdded(files: File[]) {
     const store = (Alpine.store(whisperStateStoreName) as Store)
     store.sendScreen.filesToEncrypt.push(...files);
 }
 
-async function recipientKeysAdded(files: Array<File>) {
+async function recipientKeysAdded(files: File[]) {
     files.forEach(f => {
         crypto.validateAndParseJWKFile(f)
             .then(jwk => {
@@ -176,7 +176,7 @@ function executeEncryption() {
     })
 }
 
-async function receivedWhisperFilesAdded(files: Array<File>) {
+async function receivedWhisperFilesAdded(files: File[]) {
     const store = (Alpine.store(whisperStateStoreName) as Store)
     if (store.personalPublicKey) {
         const jwk: JWK = store.personalPublicKey;

@@ -10,19 +10,19 @@ export interface JWKWithKeyHint extends jose.JWK {
     xKidHint?: string;
 }
 
-const curveAlg: string = "ES256"; // TODO: Not supported by every browser, try to generate the most secure one
+const curveAlg = "ES256"; // TODO: Not supported by every browser, try to generate the most secure one
 //const curveAlgorithm: string = "Ed25519";
 const jweEnc = "A256GCM";
 const jweAlg = "ECDH-ES+A256KW";
-const dbSchemaVersion: number = 1;
-const keyDatabaseName: string = "JWKDatabase";
-const keyPairsObjectStoreName: string = 'keys';
+const dbSchemaVersion = 1;
+const keyDatabaseName = "JWKDatabase";
+const keyPairsObjectStoreName = 'keys';
 enum DBModes {
     R = 'readonly',
     RW = 'readwrite'
 }
 type KeysAvailableListener = (personalKeyPair: JWKPair) => void;
-export default function (...listeners: Array<KeysAvailableListener>) {
+export default function (...listeners: KeysAvailableListener[]) {
     // Check for IndexedDB support
     // TODO: Consider using https://modernizr.com/ for IndexedDB and WebCryptoAPI checks
     if (!window.indexedDB) {
@@ -70,17 +70,17 @@ export async function validateAndParseJWEFile(jweFile: File, jwk: jose.JWK): Pro
 }
 
 /** Updates the changed key pair previously changed by reference (we might want to change this someday) */
-export function storePersonalKeyPair(personalKeyPair: JWKPair, ...listeners: Array<KeysAvailableListener>) {
+export function storePersonalKeyPair(personalKeyPair: JWKPair, ...listeners: KeysAvailableListener[]) {
     const request = indexedDB.open(keyDatabaseName, dbSchemaVersion);
     request.onsuccess = e => {
         const db = (e.target as IDBOpenDBRequest).result;
         storeKeyPairlocally(personalKeyPair, db)
             .then(kp => listeners?.forEach(l => l(kp)))
-            .catch(e => console.warn("Failed to store updated keypair for kid %s", personalKeyPair.publicJWK.kid))
+            .catch(e => console.warn("Failed to store updated keypair for kid %s", personalKeyPair.publicJWK.kid, e))
     }
 }
 
-export async function encryptFileForMultipleRecipients(file: File, recipients: Array<jose.JWK>): Promise<jose.GeneralJWE> {
+export async function encryptFileFrMultipleRecipients(file: File, recipients: jose.JWK[]): Promise<jose.GeneralJWE> {
     //TODO: Memory consumption, streaming of content, is text encoding the right way?int8Array
     return file.arrayBuffer()
         // Initialize GeneralEncrypt with file contents
@@ -113,7 +113,7 @@ export async function decryptFile(jwe: jose.GeneralJWE, personalPrivateKey: jose
 }
 
 /** ========= internal, non exported stuff ========= */
-function fetchOrGeneratePersonalKeyPair(listeners: Array<KeysAvailableListener>) {
+function fetchOrGeneratePersonalKeyPair(listeners: KeysAvailableListener[]) {
     // Open (or create) the database
     const request = indexedDB.open(keyDatabaseName, dbSchemaVersion);
     // Create the schema (on new db or upgraded schema)
@@ -124,10 +124,10 @@ function fetchOrGeneratePersonalKeyPair(listeners: Array<KeysAvailableListener>)
 function onDBUpgradeNeeded(event: IDBVersionChangeEvent) {
     const db = (event.target as IDBOpenDBRequest).result;
     const objectStore = db.createObjectStore(keyPairsObjectStoreName);
-    console.log("IndexDB upgraded to schema version %s!", dbSchemaVersion);
+    console.log("IndexDB upgraded %s to schema version %s!", objectStore.name, dbSchemaVersion);
 }
 
-function onDBSuccessfullyOpened(event: Event, listeners: Array<KeysAvailableListener>) {
+function onDBSuccessfullyOpened(event: Event, listeners: KeysAvailableListener[]) {
     const db = (event.target as IDBOpenDBRequest).result;
 
     // Retrieve the keys
