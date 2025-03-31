@@ -80,7 +80,7 @@ export function storePersonalKeyPair(personalKeyPair: JWKPair, ...listeners: Key
     }
 }
 
-export async function encryptFileFrMultipleRecipients(file: File, recipients: jose.JWK[]): Promise<jose.GeneralJWE> {
+export async function encryptFileForMultipleRecipients(file: File, recipients: jose.JWK[]): Promise<jose.GeneralJWE> {
     //TODO: Memory consumption, streaming of content, is text encoding the right way?int8Array
     return file.arrayBuffer()
         // Initialize GeneralEncrypt with file contents
