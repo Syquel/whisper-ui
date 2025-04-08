@@ -63,8 +63,8 @@
             <li class="pure-menu-item">
                 <a href="https://github.com/syncorix-com/whisper-ui"
                     class="pure-menu-link selectable-image-container"><span
-                        class="button-icon icon--mdi icon--mdi--github"></span><br /><span
-                        class="additional-info">to GitHub</span></a>
+                        class="button-icon icon--mdi icon--mdi--github"></span><br /><span class="additional-info">to
+                        GitHub</span></a>
             </li>
         </ul>
     </div>
@@ -232,13 +232,13 @@
                     <span class="marker-icon icon--mdi icon--mdi--human-greeting"></span>
                     <span
                         x-show="receivedScreen.encryptedFiles.length == 0 && receivedScreen.decryptedFiles.length ==0">Welcome!
-                        In order to decypher encypted data that has been sent sent to you, please drop at least one
-                        file into the box.</span>
+                        In order to decrypt prviously encrypted data that has been sent sent to you, please drop at
+                        least one file into the box.</span>
                     <span
                         x-show="receivedScreen.encryptedFiles.length > 0 && receivedScreen.decryptedFiles.length == 0">Nice!
-                        Now you and only you can decypt the content using your locally stored private key.</span>
+                        Now you and only you can decrypt the content using your locally stored private key.</span>
                     <span x-show="receivedScreen.decryptedFiles.length > 0">Great!
-                        The files have been decypted and can be downloaded.</span>
+                        The files have been decrypted and can be downloaded.</span>
                 </div>
             </div>
         </div>
@@ -307,21 +307,46 @@
     <!-- ==================== YOU / ACCOUNT SCREEN ==================== -->
     <div class="pure-g"
         x-show="engineState != CryptoEngineState.Unknown && personalPublicKey && personalPrivateKey && activeScreen == WhisperScreen.Account">
-        <div class="pure-u-1">
+        <div class="pure-u-1 pure-u-lg-1-2">
             <div class="content-box">
-                <h3 class="title">Your keys</h3>
+                <h3 class="title">What can Whisper! do?</h3>
+                <div class="box-with-icon-and-text">
+                    <span class="marker-icon icon--mdi icon--mdi--help-circle-outline"></span>
+                    <div>
+                        <p>
+                            You can either head over to the <a href="#"
+                                x-on:click="activeScreen = WhisperScreen.Send"><span
+                                    class="icon--mdi icon--mdi--call-made"></span> Send</a> section to encrypt
+                            something for somebody who has given you their Whisper! public key.
+                        </p>
+                        <p>
+                            Or you use the <a href="#" x-on:click="activeScreen = WhisperScreen.Receive"><span
+                                    class="icon--mdi icon--mdi--call-received"></span>
+                                Receive</a> section to decrypt previously encrypted data sent to you. To receive a file
+                            that can only be decrypted by you, hand your current Whisper! public key to the sender(s).
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="pure-u-1 pure-u-lg-1-2">
+            <div class="content-box">
+                <h3 id="your_keys" class="title">Your keys</h3>
                 <div class="box-with-icon-and-text">
                     <span class="marker-icon icon--mdi icon--mdi--key-chain"></span>
                     <div>
                         <p>
                             We have successfully created a keypair for you and stored it in your local browser! You can
-                            download the public key here. It is no secret and can be sent to anyone you want to receive
-                            whispers from.
+                            download the Whisper! public key here. It is not a secret and can be sent to anyone you wish
+                            to
+                            receive whispers from.
                         </p>
                         <p x-show="personalPublicKey && personalPublicKey.xKidHint">
-                            Please note that if you clear your browser data for this site, existing keys <u>will be
-                                lost</u> and new keys will be generated. This is by design, please ensure that senders
-                            have your latest public key file.
+                            <u>Please note</u>, that if you clear your browser data for this site, existing keys <u>will
+                                be
+                                lost</u> and new keys will be generated. This is by design, so please ensure that
+                            senders
+                            have your latest Whisper! public key file.
                         </p>
                         <p x-show="personalPublicKey && !personalPublicKey.xKidHint">
                             Before downloading and distributing your key, please provide some info on who you might
@@ -361,7 +386,7 @@
                     <div>
                         Whisper! was created by <a href="https://syncorix.com">Syncorix</a> in order to securely
                         exchange sensitive data with others. It
-                        runs in your browser and does not transmit data to us. In order to make it available on the
+                        runs in your browser and does not transmit any data to us. In order to make it available on the
                         internet, it needs to be hosted. We chose our hosters with regard to privacy.
                         <br />
                         Please also see
@@ -371,6 +396,31 @@
                         </ul>
 
                     </div>
+                </div>
+            </div>
+        </div>
+        <div class="pure-u-1">
+            <div class="content-box">
+                <h3 class="title">How does Whisper! work</h3>
+                <div style="text-align: center;">
+                    <img src="img/how-does-it-work.svg" alt="how does it work" style="max-width: 100%;" />
+                </div>
+                <div>
+                    This is quite simple: Whisper! uses <a
+                        href="https://en.wikipedia.org/wiki/Public-key_cryptography">asymmetric cryptography</a> and
+                    the <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API">Web Crypto API</a>
+                    to create two keys. One can be used for encryption and the other for decryption. The latter should
+                    not
+                    leave your browser's local storage. To exchange sensitive data the following steps are executed:
+                    <ol>
+                        <li>The recipients send their public key parts to the sender and use whatever communication
+                            channel they see fit.</li>
+                        <li>The sender uses the key parts of all intended recipients, encrypts the data locally in
+                            the browser and sends the resulting cryptogram to the recipients.</li>
+                        <li>The recipients decrypt the cryptogram locally in their browser and save the sensitive data.
+                            They may throw away their keys rendering the cryptogram useless.</li>
+                    </ol>
+                    Thus the sensitive data never leaves the senders' and recipients' devices.
                 </div>
             </div>
         </div>

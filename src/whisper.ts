@@ -197,7 +197,7 @@ function executeDecryption() {
             crypto.decryptFile(f.jwe, jwk)
                 .then(d => ({ name: tryExtractFileName(f.name), data: base64(d) } as DecryptedFile))
                 .then(r => store.receivedScreen.decryptedFiles.push(r))
-                .then(() => console.log("Successully decypted %s with kid %s.", f.name, jwk.kid))
+                .then(() => console.log("Successully decrypted %s with kid %s.", f.name, jwk.kid))
                 .catch(e => console.warn("Failed to decrypt %s", f.name, e))
         })
     }

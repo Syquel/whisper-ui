@@ -15,6 +15,7 @@ const chosenIcons: Array<string> = [
     'check',
     'close',
     'github',
+    'help-circle-outline',
     'human-greeting',
     'information-outline',
     'key-chain',
