@@ -40,7 +40,7 @@ jobs:
             replacement="${{ steps.vars.outputs.sha_short }}"
           fi 
           echo "${replacement} will be used as version in build-info"
-          sed -i "s/__dev/${replacement}/g" src/build-info.ts
+          sed -i "s/__dev/${replacement}/g" src/ts/build-info.ts
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
@@ -48,14 +48,11 @@ jobs:
         run: bun install
       - name: lint sources
         run: bun run eslint src/
-      - name: build code
-        run: bun build src/* --outdir dist --minify
-      - name: build incons
-        run: bun run ./build/build-iconify.ts
+      - name: build code and icon css
+        run: bun run build/build
         # https://pico.sh/pgs#-headers
       - name: Add security headers for pgs.sh
         run: |
-          mkdir bundle/
           target=bundle/_headers
           echo "/*" >> $target
           echo "  Strict-Transport-Security: max-age=31536000; includeSubDomains" >> $target
@@ -64,12 +61,6 @@ jobs:
           echo "  Referrer-Policy: same-origin" >> $target
           echo "  Permissions-Policy: geolocation=(), camera=(), microphone=()" >> $target
           echo "  X-Content-Type-Options: nosniff" >> $target
-      - name: bundle
-        run: |
-          cp -R dist bundle/
-          cp -R img bundle/
-          cp -R css bundle/
-          cp index.html bundle/
       - name: Upload build artifact
         uses:  actions/upload-artifact@v4
         with:

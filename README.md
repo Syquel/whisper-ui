@@ -63,7 +63,18 @@ Use [Bun](https://bun.sh/) to run build script that compiles icons
 bun run ./build/build-iconify.ts
 ```
 
-Use [Bun](https://bun.sh/) for on the fly typescript compilation and serving the app
+Use [Bun](https://bun.sh/) for on the fly typescript compilation
 ```sh
-bun build index.html
+bun build src/index.html --watch --outdir local
 ```
+
+and a tool of your choice serving the app
+```sh
+python3 -m http.server 8080 -d local
+```
+
+Please note that usually
+```sh
+bun src/index.html
+```
+should do the same but it compiled the jose lib without support for ```kty: 'EC``` for some reason.
