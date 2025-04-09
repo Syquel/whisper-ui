@@ -306,7 +306,7 @@
 
     <!-- ==================== YOU / ACCOUNT SCREEN ==================== -->
     <div class="pure-g"
-        x-show="engineState != CryptoEngineState.Unknown && personalPublicKey && personalPrivateKey && activeScreen == WhisperScreen.Account">
+        x-show="engineState != CryptoEngineState.Unknown && personalKeyPair && activeScreen == WhisperScreen.Account">
         <div class="pure-u-1 pure-u-lg-1-2">
             <div class="content-box">
                 <h3 class="title">What can Whisper! do?</h3>
@@ -341,19 +341,19 @@
                             to
                             receive whispers from.
                         </p>
-                        <p x-show="personalPublicKey && personalPublicKey.xKidHint">
+                        <p x-show="!!accountScreen.publicKeyUiModel?.xKidHint">
                             <u>Please note</u>, that if you clear your browser data for this site, existing keys <u>will
                                 be
                                 lost</u> and new keys will be generated. This is by design, so please ensure that
                             senders
                             have your latest Whisper! public key file.
                         </p>
-                        <p x-show="personalPublicKey && !personalPublicKey.xKidHint">
+                        <p x-show="accountScreen.publicKeyUiModel && !accountScreen.publicKeyUiModel.xKidHint">
                             Before downloading and distributing your key, please provide some info on who you might
                             be, like Name or E-Mail to help senders using it.
                         </p>
                         <div class="pure-form pure-form-aligned"
-                            x-show="personalPublicKey && !personalPublicKey.xKidHint">
+                            x-show="accountScreen.publicKeyUiModel && !accountScreen.publicKeyUiModel.xKidHint">
                             <label for="key-id-hint">Hint about you identity</label>
                             <input id="key-id-hint" type="text" size="20" minlength="5" maxlength="50"
                                 x-on:keydown="$refs.btnHintOk.disabled = !$el.validity.valid"
@@ -366,11 +366,11 @@
                 </div>
                 <div class="box-with-icon-and-text">
                     <a href="#" class="pure-menu-link selectable-image-container"
-                        x-show="personalPublicKey && personalPublicKey.xKidHint"
-                        x-bind:href="'data:application/json;charset=utf-8,' + JSON.stringify(personalPublicKey)"
-                        x-bind:download="personalPublicKey?.xKidHint + '-' + personalPublicKey?.kid.slice(0,8) + FileSuffix.PersonalPublicKey"><span
+                        x-show="!!accountScreen.publicKeyUiModel?.xKidHint"
+                        x-bind:href="'data:application/json;charset=utf-8,' + accountScreen.publicKeyUiModel?.downloadJson || ''"
+                        x-bind:download="accountScreen.publicKeyUiModel?.downloadFileName || ''"><span
                             class="button-icon icon--mdi icon--mdi--tray-arrow-down"></span><br /><span
-                            class="additional-info" x-text="personalPublicKey?.xKidHint"></span></a>
+                            class="additional-info" x-text="accountScreen.publicKeyUiModel?.xKidHint || ''"></span></a>
                 </div>
             </div>
         </div>

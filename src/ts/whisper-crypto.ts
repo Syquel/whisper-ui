@@ -1,27 +1,28 @@
 import * as jose from 'jose'
 
-/** A pair consiting of a private an a public key. */
-export interface JWKPair {
-    privateJWK: jose.JWK
-    publicJWK: JWKWithKeyHint
+/** A pair consisting of a private an a public key. */
+export interface KeyPair {
+    privateKey: CryptoKey
+    publicKey: JWKWithKeyHint
 }
 export interface JWKWithKeyHint extends jose.JWK {
     /** Custom extension to add a hint (like name or email) */
     xKidHint?: string;
 }
 
-const curveAlg = "ES256"; // TODO: Not supported by every browser, try to generate the most secure one
-//const curveAlgorithm: string = "Ed25519";
+// See https://github.com/panva/jose/issues/210
+// TODO: Not supported by every browser, try to generate the most secure one suitable for encryption
+const curveAlg = "ECDH-ES";
 const jweEnc = "A256GCM";
 const jweAlg = "ECDH-ES+A256KW";
-const dbSchemaVersion = 1;
+const dbSchemaVersion = 2;
 const keyDatabaseName = "JWKDatabase";
 const keyPairsObjectStoreName = 'keys';
 enum DBModes {
     R = 'readonly',
     RW = 'readwrite'
 }
-type KeysAvailableListener = (personalKeyPair: JWKPair) => void;
+type KeysAvailableListener = (personalKeyPair: KeyPair) => void;
 export default function (...listeners: KeysAvailableListener[]) {
     // Check for IndexedDB support
     // TODO: Consider using https://modernizr.com/ for IndexedDB and WebCryptoAPI checks
@@ -70,13 +71,13 @@ export async function validateAndParseJWEFile(jweFile: File, jwk: jose.JWK): Pro
 }
 
 /** Updates the changed key pair previously changed by reference (we might want to change this someday) */
-export function storePersonalKeyPair(personalKeyPair: JWKPair, ...listeners: KeysAvailableListener[]) {
+export function storePersonalKeyPair(personalKeyPair: KeyPair, ...listeners: KeysAvailableListener[]) {
     const request = indexedDB.open(keyDatabaseName, dbSchemaVersion);
     request.onsuccess = e => {
         const db = (e.target as IDBOpenDBRequest).result;
         storeKeyPairlocally(personalKeyPair, db)
             .then(kp => listeners?.forEach(l => l(kp)))
-            .catch(e => console.warn("Failed to store updated keypair for kid %s", personalKeyPair.publicJWK.kid, e))
+            .catch(e => console.warn("Failed to store updated keypair for kid %s", personalKeyPair.publicKey.kid, e))
     }
 }
 
@@ -88,7 +89,7 @@ export async function encryptFileForMultipleRecipients(file: File, recipients: j
         .then(b => new jose.GeneralEncrypt(b))
         // Set JWE encoding and algorithm in protected header
         .then(e => e.setProtectedHeader({ enc: jweEnc, alg: jweAlg }))
-        // For each recipient, encrypt the CEK using their ES256 public key
+        // For each recipient, encrypt the CEK using their public key
         .then(e => recipients.map(jwk => addRecipient(jwk, e)))
         // Collect all promisied for the recipients
         .then(p => Promise.all(p))
@@ -105,9 +106,8 @@ async function addRecipient(jwk: jose.JWK, encryptor: jose.GeneralEncrypt): Prom
         .then(r => r.setUnprotectedHeader({ kid: jwk.kid }));
 }
 
-export async function decryptFile(jwe: jose.GeneralJWE, personalPrivateKey: jose.JWK): Promise<Uint8Array> {
-    return jose.importJWK(personalPrivateKey, jweAlg)
-        .then(pk => jose.generalDecrypt(jwe, pk))
+export async function decryptFile(jwe: jose.GeneralJWE, personalPrivateKey: CryptoKey): Promise<Uint8Array> {
+    return jose.generalDecrypt(jwe, personalPrivateKey)
         .then(res => res.plaintext)
         ;
 }
@@ -123,8 +123,14 @@ function fetchOrGeneratePersonalKeyPair(listeners: KeysAvailableListener[]) {
 
 function onDBUpgradeNeeded(event: IDBVersionChangeEvent) {
     const db = (event.target as IDBOpenDBRequest).result;
+    if (db.objectStoreNames.contains(keyPairsObjectStoreName)) {
+        console.warn("An old Whisper! keypair has been found and has unfortunately to be deleted as it cannot be upgraded for security reasons :/")
+        db.deleteObjectStore(keyPairsObjectStoreName);
+        console.log("Old IndexDB version dropped and can be recreated with schema version %s!", dbSchemaVersion);
+    }
+    // (Re) Create an object store
     const objectStore = db.createObjectStore(keyPairsObjectStoreName);
-    console.log("IndexDB upgraded %s to schema version %s!", objectStore.name, dbSchemaVersion);
+    console.log("IndexDB created %s with schema version %s!", objectStore.name, dbSchemaVersion);
 }
 
 function onDBSuccessfullyOpened(event: Event, listeners: KeysAvailableListener[]) {
@@ -138,7 +144,7 @@ function onDBSuccessfullyOpened(event: Event, listeners: KeysAvailableListener[]
     getRequest.onsuccess = function (event: Event) {
         const data = (event.target as IDBRequest).result;
         if (data) {
-            const keyPair: JWKPair = data;
+            const keyPair: KeyPair = data;
             console.log('Retrieved JWK:', keyPair);
             listeners.forEach(l => l(keyPair));
         } else {
@@ -152,36 +158,40 @@ function onDBSuccessfullyOpened(event: Event, listeners: KeysAvailableListener[]
 }
 
 /** Stores a key pair */
-async function storeKeyPairlocally(keyPair: JWKPair, targetDatabase: IDBDatabase): Promise<JWKPair> {
+async function storeKeyPairlocally(keyPair: KeyPair, targetDatabase: IDBDatabase): Promise<KeyPair> {
     const transaction = targetDatabase.transaction([keyPairsObjectStoreName], DBModes.RW);
     const objectStore = transaction.objectStore(keyPairsObjectStoreName);
     objectStore.put(keyPair, 0); // For now we only support a single pair
-    console.log("Successfully persisted keypair for kid %s", keyPair.publicJWK.kid)
+    console.log("Successfully persisted keypair for kid %s", keyPair.publicKey.kid)
     return keyPair;
 }
 
 /** Generates a new key pair */
-async function generateNewPair(): Promise<JWKPair> {
-    return jose.generateKeyPair(curveAlg, { extractable: true })
-        .then(({ privateKey, publicKey }) => Promise.all([
-            jose.exportJWK(privateKey),
-            jose.exportJWK(publicKey)
-        ]))
-        .then(([privateJWK, publicJWK]) => ({ privateJWK, publicJWK }))
-        .then((pair: JWKPair) => {
-            // Manually add alg, as it is not done by default!
-            pair.privateJWK.alg = curveAlg;
-            pair.publicJWK.alg = curveAlg;
-            return pair
-        })
-        .then((pair: JWKPair) => {
-            // Precalculate and add a fingerprint for identification as kid
-            return fingerprint(pair.publicJWK).then(fp => { pair.privateJWK.kid = fp; pair.publicJWK.kid = fp; return pair })
-        })
+async function generateNewPair(): Promise<KeyPair> {
+    return jose.generateKeyPair(curveAlg, { extractable: false })
+        .then(toWhisperKeyPair)
         .catch(error => {
             console.error('Error generating key pair:', error);
             throw error;
         });
+}
+
+async function toWhisperKeyPair(keypairResult: jose.GenerateKeyPairResult): Promise<KeyPair> {
+    return jose.exportJWK(keypairResult.publicKey)
+        // Manually add alg, as it is not done by default!
+        .then(addAlgorithm)
+        .then(addFingerprint)
+        .then(jwk => ({ privateKey: keypairResult.privateKey, publicKey: jwk } as KeyPair))
+}
+
+function addAlgorithm(jwk: jose.JWK): jose.JWK {
+    jwk.alg = curveAlg;
+    return jwk;
+}
+
+async function addFingerprint(jwk: jose.JWK): Promise<jose.JWK> {
+    return fingerprint(jwk)
+        .then(fp => { jwk.kid = fp; return jwk });
 }
 
 async function fingerprint(jwk: jose.JWK): Promise<string> {

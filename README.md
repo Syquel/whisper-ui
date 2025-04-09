@@ -32,6 +32,7 @@ Drop encrypted stuff you received, then decrypt locally and download result:
 
 ## Features (free)
 * A keypair is automatically generated locally and stored in the browser's IndexedDB
+* The private key is created with [```{ extractable: false }```](src/ts/whisper-crypto.ts) and cannot be [exported by the application](https://www.w3.org/TR/WebCryptoAPI/#cryptokey-interface-members).
 * The public part of the keypair can be copied and distributed to those who want to send you sensitive data
 * The private part remains local and is the only way to decrypt data addressed to you
 * Use the hosted version (the good stuff happens locally anyway) or self host and modify it
