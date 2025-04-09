@@ -354,7 +354,7 @@
                         </p>
                         <div class="pure-form pure-form-aligned"
                             x-show="accountScreen.publicKeyUiModel && !accountScreen.publicKeyUiModel.xKidHint">
-                            <label for="key-id-hint">Hint about you identity</label>
+                            <label for="key-id-hint">Hint about your identity</label>
                             <input id="key-id-hint" type="text" size="20" minlength="5" maxlength="50"
                                 x-on:keydown="$refs.btnHintOk.disabled = !$el.validity.valid"
                                 placeholder="Name or E-Mail" x-model="accountScreen.personalKeyHint" />
@@ -365,12 +365,41 @@
                     </div>
                 </div>
                 <div class="box-with-icon-and-text">
+                    <!-- download public key -->
                     <a href="#" class="pure-menu-link selectable-image-container"
                         x-show="!!accountScreen.publicKeyUiModel?.xKidHint"
                         x-bind:href="'data:application/json;charset=utf-8,' + accountScreen.publicKeyUiModel?.downloadJson || ''"
                         x-bind:download="accountScreen.publicKeyUiModel?.downloadFileName || ''"><span
                             class="button-icon icon--mdi icon--mdi--tray-arrow-down"></span><br /><span
                             class="additional-info" x-text="accountScreen.publicKeyUiModel?.xKidHint || ''"></span></a>
+                    <!-- delete keys and generate new ones -->
+                    <a href="#" class="pure-menu-link selectable-image-container"
+                        x-show="!!accountScreen.publicKeyUiModel?.xKidHint"
+                        x-on:click="$refs.delKeysDialog.showModal()"><span
+                            class="button-icon icon--mdi icon--mdi--trash-can-outline"></span><br /><span
+                            class="additional-info">Throw keys away</span></a>
+                    <!-- modal dialog to confirm key deletion and regeneration -->
+                    <dialog x-ref="delKeysDialog">
+                        <div class="box-with-icon-and-text">
+                            <span class="marker-icon icon--mdi icon--mdi--trash-can-outline"></span>
+                            <div>
+                                <p>
+                                    Data encrypted with this key pair cannot be decrypted again and once deleted the
+                                    keys cannot be recovered.
+                                </p>
+                                Are you sure?
+                                <div class="box-with-icon-and-text">
+                                    <a href="#" class="pure-menu-link selectable-image-container"
+                                        x-on:click="$refs.delKeysDialog.close(); $deleteAndRegenerateKeys"><span
+                                            class="button-icon icon--mdi icon--mdi--check"></span><br /><span
+                                            class="additional-info">Yes</span></a>
+                                    <a href="#" class="pure-menu-link selectable-image-container"
+                                        x-on:click="$refs.delKeysDialog.close()" autofocus><span
+                                            class="button-icon icon--mdi icon--mdi--close"></span><br /><span
+                                            class="additional-info">No</span></a>
+                                </div>
+                            </div>
+                    </dialog>
                 </div>
             </div>
         </div>

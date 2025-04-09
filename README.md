@@ -1,8 +1,11 @@
 # whisper-ui
-![](img-doc/whisper.png) Secure and very easy to use sending of encrypted data anywhere (browser ui)
+![](img-doc/whisper.png) Secure and very easy to use local encryption to send data anywhere (browser ui)
 
 ## Motivation
 Make it super easy to locally encrypt sensible data for designated recipients ensuring privacy, integrity and compliance on whatever way the data is transported. Keys should be considered throw away material and not be reused often in order to render the transported cryptograms useless, even if they are retained in e.g. mailboxes.
+
+## Demo
+See it in action and test it at [whisper.syncorix.com](https://whisper.syncorix.com/). Use at your own risk according to [LICENSE](LICENSE).
 
 ## How does it work?
 ![](img-doc/how-does-it-work.png)
@@ -31,12 +34,15 @@ Drop encrypted stuff you received, then decrypt locally and download result:
 </div>
 
 ## Features (free)
+* Easy to use and portable across major browsers
+* Completely local, you can disconnect internet after the page is loaded
 * A keypair is automatically generated locally and stored in the browser's IndexedDB
 * The private key is created with [```{ extractable: false }```](src/ts/whisper-crypto.ts) and cannot be [exported by the application](https://www.w3.org/TR/WebCryptoAPI/#cryptokey-interface-members).
 * The public part of the keypair can be copied and distributed to those who want to send you sensitive data
 * The private part remains local and is the only way to decrypt data addressed to you
+* Pretty secure algorithms like ECDH-ES, P-256 for key pair, ECDH-ES+A256KW for key wrapping and A256GCM for content encryption
 * Use the hosted version (the good stuff happens locally anyway) or self host and modify it
-* TODO: List security and compliance features
+* TODO: continue
 
 ## Advanced and convenience features (non-free)
 * Get a branded, maintained and supported installation for your organization and its partners

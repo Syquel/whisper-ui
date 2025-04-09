@@ -14,7 +14,7 @@ import * as dropzone from './whisper-dropzone'
 import { softwareVersion } from './build-info'
 
 // Call default module exports, provide listeners
-crypto.default(keysAvailable)
+crypto.start([keysAvailable])
 dropzone.default([whisperFilesAdded], [recipientKeysAdded], [receivedWhisperFilesAdded])
 
 // Screens selectable per menu
@@ -112,6 +112,7 @@ Alpine.magic('reset', reset);
 Alpine.magic('submitPersonalKeyHint', submitPersonalKeyHint);
 Alpine.magic('executeEncryption', executeEncryption);
 Alpine.magic('executeDecryption', executeDecryption);
+Alpine.magic('deleteAndRegenerateKeys', deleteAndRegenerateKeys);
 // Start the show
 Alpine.start();
 
@@ -210,6 +211,17 @@ function executeDecryption() {
                 .catch(e => console.warn("Failed to decrypt %s", f.name, e))
         })
     }
+}
+
+function deleteAndRegenerateKeys() {
+    // Completely reset UI
+    reset();
+    const store = (Alpine.store(whisperStateStoreName) as Store)
+    store.accountScreen.publicKeyUiModel = null;
+    store.personalKeyPair = null;
+    store.engineState = CryptoEngineState.Unknown;
+    // Delete and regenerate personal key pair
+    crypto.deleteAndRegenerateKeys([keysAvailable]);
 }
 
 function toUiModel(publicKey: JWKWithKeyHint): PublicKeyUiModel {

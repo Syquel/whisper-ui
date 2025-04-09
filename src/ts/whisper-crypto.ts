@@ -23,7 +23,9 @@ enum DBModes {
     RW = 'readwrite'
 }
 type KeysAvailableListener = (personalKeyPair: KeyPair) => void;
-export default function (...listeners: KeysAvailableListener[]) {
+
+
+export function start(listeners: KeysAvailableListener[]) {
     // Check for IndexedDB support
     // TODO: Consider using https://modernizr.com/ for IndexedDB and WebCryptoAPI checks
     if (!window.indexedDB) {
@@ -33,7 +35,19 @@ export default function (...listeners: KeysAvailableListener[]) {
     } else {
         console.warn("No listeners provided, skipping key retrieval.")
     }
-} // makes this a module
+}
+
+export async function deleteAndRegenerateKeys(listeners: KeysAvailableListener[]) {
+    const request = indexedDB.open(keyDatabaseName, dbSchemaVersion);
+    request.onsuccess = e => {
+        (e.target as IDBOpenDBRequest).result
+            .transaction([keyPairsObjectStoreName], DBModes.RW)
+            .objectStore(keyPairsObjectStoreName)
+            .clear();
+        console.log("%s deleted from IndexedDB as requested by user", keyPairsObjectStoreName);
+        start(listeners);
+    }
+}
 
 export async function validateAndParseJWKFile(jwkFile: File): Promise<JWKWithKeyHint> {
     // Parse the JWK string into a JSON object
@@ -98,14 +112,6 @@ export async function encryptFileForMultipleRecipients(file: File, recipients: j
         ;
 }
 
-async function addRecipient(jwk: jose.JWK, encryptor: jose.GeneralEncrypt): Promise<jose.Recipient> {
-    // Use ECDH-ES+A256KW for key wrapping, will generate an epk (ephemeral public key) and cek (Content Encryption Key)
-    return jose.importJWK(jwk, jweAlg)
-        .then(pk => encryptor.addRecipient(pk))
-        // Add the kid to recipient header in JWE in order to select key when decrypting
-        .then(r => r.setUnprotectedHeader({ kid: jwk.kid }));
-}
-
 export async function decryptFile(jwe: jose.GeneralJWE, personalPrivateKey: CryptoKey): Promise<Uint8Array> {
     return jose.generalDecrypt(jwe, personalPrivateKey)
         .then(res => res.plaintext)
@@ -162,7 +168,7 @@ async function storeKeyPairlocally(keyPair: KeyPair, targetDatabase: IDBDatabase
     const transaction = targetDatabase.transaction([keyPairsObjectStoreName], DBModes.RW);
     const objectStore = transaction.objectStore(keyPairsObjectStoreName);
     objectStore.put(keyPair, 0); // For now we only support a single pair
-    console.log("Successfully persisted keypair for kid %s", keyPair.publicKey.kid)
+    console.log("Successfully persisted keypair with label %s and kid %s", keyPair.publicKey.xKidHint, keyPair.publicKey.kid)
     return keyPair;
 }
 
@@ -187,6 +193,14 @@ async function toWhisperKeyPair(keypairResult: jose.GenerateKeyPairResult): Prom
 function addAlgorithm(jwk: jose.JWK): jose.JWK {
     jwk.alg = curveAlg;
     return jwk;
+}
+
+async function addRecipient(jwk: jose.JWK, encryptor: jose.GeneralEncrypt): Promise<jose.Recipient> {
+    // Use ECDH-ES+A256KW for key wrapping, will generate an epk (ephemeral public key) and cek (Content Encryption Key)
+    return jose.importJWK(jwk, jweAlg)
+        .then(pk => encryptor.addRecipient(pk))
+        // Add the kid to recipient header in JWE in order to select key when decrypting
+        .then(r => r.setUnprotectedHeader({ kid: jwk.kid }));
 }
 
 async function addFingerprint(jwk: jose.JWK): Promise<jose.JWK> {

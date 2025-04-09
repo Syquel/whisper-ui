@@ -23,6 +23,7 @@ const chosenIcons: Array<string> = [
     'lock-open-check-outline',
     'robot-dead',
     'security',
+    'trash-can-outline',
     'tray-arrow-down',
 ];
 

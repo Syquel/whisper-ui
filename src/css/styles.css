@@ -6,6 +6,16 @@
     /* Syncorix Lime Greem */
 }
 
+/* for foreground elements like dialogs */
+::backdrop {
+    background-color: white;
+    opacity: 0.75;
+}
+
+dialog {
+    border: 1px solid gray;
+}
+
 /* create a box w/ margins to put content into */
 .content-box {
     margin-top: 2rem;
