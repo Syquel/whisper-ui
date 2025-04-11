@@ -85,3 +85,24 @@ Please note that usually
 bun src/index.html
 ```
 should do the same but it compiled the jose lib without support for ```kty: 'EC``` for some reason.
+
+## Testing
+A couple of functional UI tests across major browser engine is included in [tests/](tests/). To execute locally use one of the follwoing:
+### Launch the Test UI
+ ```sh
+bun playwright test --ui
+```
+### Run tests against dev environment (localhost:8080)
+ ```sh
+bun playwright test --project='dev*'
+```
+### Run tests against hosted environments te, qa or live
+ ```sh
+bun playwright test --project='<te|qa|live>*'
+```
+### Run tests against all environments
+ ```sh
+bun playwright test
+```
+
+ See [test config](playwright.config.ts) for complete list of projects to execute and [Playwright](https://playwright.dev/) for doc

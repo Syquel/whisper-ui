@@ -5,9 +5,9 @@ import { getIconsCSS } from '@iconify/utils';
 import { locate } from '@iconify/json';
 import { IconifyJSON } from '@iconify/types';
 
-const iconSetName: string = 'mdi';
+const iconSetName = 'mdi';
 const targetFileName = 'src/css/' + iconSetName + '-icons.css'
-const chosenIcons: Array<string> = [
+const chosenIcons: string[] = [
     'account-circle-outline',
     'call-made',
     'call-received',

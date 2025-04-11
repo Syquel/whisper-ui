@@ -8,6 +8,7 @@
     "@iconify/json": "^2.2.319",
     "@iconify/types": "^2.0.0",
     "@iconify/utils": "^2.3.0",
+    "@playwright/test": "^1.51.1",
     "@types/alpinejs": "^3.13.11",
     "@types/bun": "latest",
     "typescript-eslint": "^8.28.0",
