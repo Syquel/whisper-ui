@@ -1,16 +1,25 @@
 {
+  "scripts": {
+    "lint": "eslint"
+  },
   "dependencies": {
     "alpinejs": "^3.14.9",
     "jose": "^6.0.10",
     "purecss": "^3.0.0"
   },
   "devDependencies": {
+    "@eslint/compat": "^1.2.8",
+    "@eslint/js": "^9.24.0",
     "@iconify/json": "^2.2.319",
     "@iconify/types": "^2.0.0",
     "@iconify/utils": "^2.3.0",
     "@playwright/test": "^1.51.1",
+    "@stylistic/eslint-plugin": "^4.2.0",
+    "@tsconfig/recommended": "^1.0.8",
+    "@tsconfig/strictest": "^2.0.5",
     "@types/alpinejs": "^3.13.11",
     "@types/bun": "latest",
+    "eslint": "^9.24.0",
     "typescript-eslint": "^8.28.0",
     "webpack-cli": "^6.0.1"
   },

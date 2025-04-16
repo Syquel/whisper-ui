@@ -1,21 +1,21 @@
 // Alpine for client side UI magic https://alpinejs.dev/
-import Alpine from 'alpinejs'
+import Alpine from "alpinejs";
 // https://github.com/panva/jose for JWK and JWE support
-import { JWK, GeneralJWE } from 'jose'
+import { GeneralJWE, JWK } from "jose";
 // Bundle PureCss https://pure-css.github.io/start/
-import 'purecss/build/pure-min.css';
-import 'purecss/build/grids-responsive.css';
+import "purecss/build/pure-min.css";
+import "purecss/build/grids-responsive.css";
 // Whisper crypto module
-import * as crypto from './whisper-crypto'
-import { JWKWithKeyHint, KeyPair } from './whisper-crypto'
+import * as crypto from "./whisper-crypto";
+import { JWKWithKeyHint, KeyPair } from "./whisper-crypto";
 // Drag'n'drop handling
-import * as dropzone from './whisper-dropzone'
+import * as dropzone from "./whisper-dropzone";
 // Build info
-import { softwareVersion } from './build-info'
+import { softwareVersion } from "./build-info";
 
 // Call default module exports, provide listeners
-crypto.start([keysAvailable])
-dropzone.default([whisperFilesAdded], [recipientKeysAdded], [receivedWhisperFilesAdded])
+crypto.start([keysAvailable]);
+dropzone.default([whisperFilesAdded], [recipientKeysAdded], [receivedWhisperFilesAdded]);
 
 // Screens selectable per menu
 export enum WhisperScreen {
@@ -44,7 +44,8 @@ window.CryptoEngineState = CryptoEngineState;
 window.FileSuffix = FileSuffix;
 
 // Alpine configuration, create a store for Alpine to react on
-const whisperStateStoreName = "whisperState" // TODO: Is a single store sufficient and good practice?
+const whisperStateStoreName = Symbol("whisperState"); // TODO: Is a single store sufficient and good practice?
+
 interface EncryptedFile {
     name: string;
     jwe: GeneralJWE;
@@ -92,33 +93,33 @@ const store: Store = {
     sendScreen: {
         recipientPublicKeys: [],
         filesToEncrypt: [],
-        encryptedFiles: [],
+        encryptedFiles: []
     },
     receivedScreen: {
         encryptedFiles: [],
         decryptedFiles: []
     },
     accountScreen: {
-        personalKeyHint: '',
+        personalKeyHint: "",
         publicKeyUiModel: null
     },
     appVersion: softwareVersion,
-    shortenTo11: shortenTo11,
-}
+    shortenTo11: shortenTo11
+};
 // Register store with alpine
 Alpine.store(whisperStateStoreName, store);
 // Link some callbacks to alpine context
-Alpine.magic('reset', reset);
-Alpine.magic('submitPersonalKeyHint', submitPersonalKeyHint);
-Alpine.magic('executeEncryption', executeEncryption);
-Alpine.magic('executeDecryption', executeDecryption);
-Alpine.magic('deleteAndRegenerateKeys', deleteAndRegenerateKeys);
+Alpine.magic("reset", reset);
+Alpine.magic("submitPersonalKeyHint", submitPersonalKeyHint);
+Alpine.magic("executeEncryption", executeEncryption);
+Alpine.magic("executeDecryption", executeDecryption);
+Alpine.magic("deleteAndRegenerateKeys", deleteAndRegenerateKeys);
 // Start the show
 Alpine.start();
 
 // Update store when keys become accessible
 function keysAvailable(personalKeyPair: KeyPair) {
-    const store = (Alpine.store(whisperStateStoreName) as Store)
+    const store = Alpine.store(whisperStateStoreName) as Store;
     store.personalKeyPair = personalKeyPair;
     // Enable all components dependent on crypto engine
     store.engineState = CryptoEngineState.Initialized;
@@ -126,7 +127,7 @@ function keysAvailable(personalKeyPair: KeyPair) {
 }
 // Reset states in order to start over
 function reset() {
-    const store = (Alpine.store(whisperStateStoreName) as Store)
+    const store = Alpine.store(whisperStateStoreName) as Store;
 
     // Reset send screen
     store.sendScreen.recipientPublicKeys.length = 0;
@@ -138,85 +139,95 @@ function reset() {
     store.receivedScreen.decryptedFiles.length = 0;
 
     // Reset Account Screen
-    store.accountScreen.personalKeyHint = '';
+    store.accountScreen.personalKeyHint = "";
 
     store.engineState = CryptoEngineState.Initialized;
 }
 
 function submitPersonalKeyHint() {
     // Set the hint via Alpine, to make the UI react to the update
-    const alpineStore = (Alpine.store(whisperStateStoreName) as Store)
-    if (alpineStore.personalKeyPair && alpineStore.personalKeyPair.publicKey) {
+    const alpineStore = Alpine.store(whisperStateStoreName) as Store;
+    if (alpineStore.personalKeyPair) {
         // Set custom hint and save updated reference
-        alpineStore.personalKeyPair.publicKey.xKidHint = alpineStore.accountScreen.personalKeyHint
+        alpineStore.personalKeyPair.publicKey.xKidHint = alpineStore.accountScreen.personalKeyHint;
         alpineStore.accountScreen.publicKeyUiModel = toUiModel(alpineStore.personalKeyPair.publicKey);
     }
     if (store.personalKeyPair) {
         // But store the "raw" keys and not the alpine proxy to IndexedDB
-        crypto.storePersonalKeyPair(store.personalKeyPair)
+        crypto.storePersonalKeyPair(store.personalKeyPair);
     }
 }
 
 function whisperFilesAdded(files: File[]) {
-    const store = (Alpine.store(whisperStateStoreName) as Store)
+    const store = Alpine.store(whisperStateStoreName) as Store;
     store.sendScreen.filesToEncrypt.push(...files);
 }
 
-async function recipientKeysAdded(files: File[]) {
-    files.forEach(f => {
+function recipientKeysAdded(files: File[]) {
+    files.forEach((f) => {
         crypto.validateAndParseJWKFile(f)
-            .then(jwk => {
-                console.log("A new recipient seems to be available!")
-                const store = (Alpine.store(whisperStateStoreName) as Store)
+            .then((jwk) => {
+                console.log("A new recipient seems to be available!");
+                const store = Alpine.store(whisperStateStoreName) as Store;
                 store.sendScreen.recipientPublicKeys.push(jwk);
             })
-            .catch(ex => console.warn("Failed to accept recipient jwk!", ex));
+            .catch((ex: unknown) => {
+                console.warn("Failed to accept recipient jwk!", ex);
+            });
     });
 }
 
 function executeEncryption() {
-    const store = (Alpine.store(whisperStateStoreName) as Store)
+    const store = Alpine.store(whisperStateStoreName) as Store;
     const keys = store.sendScreen.recipientPublicKeys;
-    store.sendScreen.filesToEncrypt.forEach(f => {
+    store.sendScreen.filesToEncrypt.forEach((f) => {
         crypto.encryptFileForMultipleRecipients(f, keys)
             .then(jwe => ({ name: f.name, jwe: jwe }))
             .then(ef => store.sendScreen.encryptedFiles.push(ef))
-            .catch(e => console.warn("Failed to encrypt %s.", f.name, e))
-    })
+            .catch((e: unknown) => {
+                console.warn("Failed to encrypt %s.", f.name, e);
+            });
+    });
 }
 
-async function receivedWhisperFilesAdded(files: File[]) {
-    const store = (Alpine.store(whisperStateStoreName) as Store)
+function receivedWhisperFilesAdded(files: File[]) {
+    const store = Alpine.store(whisperStateStoreName) as Store;
     if (store.personalKeyPair) {
         const jwk: JWK = store.personalKeyPair.publicKey;
-        files.forEach(f => {
+        files.forEach((f) => {
             crypto.validateAndParseJWEFile(f, jwk)
                 .then(j => ({ name: f.name, jwe: j }))
                 .then(ef => store.receivedScreen.encryptedFiles.push(ef))
-                .catch(e => console.warn("File %s is no valid JWE containing a recipient with kid %s", f.name, jwk.kid, e))
-        })
+                .catch((e: unknown) => {
+                    console.warn("File %s is no valid JWE containing a recipient with kid %s", f.name, jwk.kid, e);
+                });
+        });
     }
 }
 
 function executeDecryption() {
-    const store = (Alpine.store(whisperStateStoreName) as Store)
+    const store = Alpine.store(whisperStateStoreName) as Store;
     if (store.personalKeyPair) {
         const kid = store.personalKeyPair.publicKey.kid;
         const pk: CryptoKey = store.personalKeyPair.privateKey;
-        store.receivedScreen.encryptedFiles.forEach(f => {
+        store.receivedScreen.encryptedFiles.forEach((f) => {
             crypto.decryptFile(f.jwe, pk)
                 .then(d => ({ name: tryExtractFileName(f.name), data: base64(d) } as DecryptedFile))
                 .then(r => store.receivedScreen.decryptedFiles.push(r))
-                .then(() => console.log("Successully decrypted %s with kid %s.", f.name, kid))
-                .catch(e => console.warn("Failed to decrypt %s", f.name, e))
-        })
+                .then(() => {
+                    console.log("Successully decrypted %s with kid %s.", f.name, kid);
+                })
+                .catch((e: unknown) => {
+                    console.warn("Failed to decrypt %s", f.name, e);
+                });
+        });
     }
 }
 
 function deleteAndRegenerateKeys() {
     // Completely reset UI
     reset();
-    const store = (Alpine.store(whisperStateStoreName) as Store)
+    const store = Alpine.store(whisperStateStoreName) as Store;
     store.accountScreen.publicKeyUiModel = null;
     store.personalKeyPair = null;
     store.engineState = CryptoEngineState.Unknown;
@@ -226,16 +237,16 @@ function deleteAndRegenerateKeys() {
 
 function toUiModel(publicKey: JWKWithKeyHint): PublicKeyUiModel {
     if (!publicKey.kid) {
-        throw "kid is missing on public jwk!"
+        throw Error("kid is missing on public jwk!");
     }
-    const kid: string = publicKey.kid
+    const kid: string = publicKey.kid;
     const xKidHint: string | null = publicKey.xKidHint || null;
     return {
         kid: kid,
         xKidHint: xKidHint,
         downloadJson: JSON.stringify(publicKey),
-        downloadFileName: xKidHint + "-" + kid.slice(0, 8) + FileSuffix.PersonalPublicKey
-    }
+        downloadFileName: xKidHint ?? "" + "-" + kid.slice(0, 8) + FileSuffix.PersonalPublicKey
+    };
 }
 
 function tryExtractFileName(fileName: string): string {

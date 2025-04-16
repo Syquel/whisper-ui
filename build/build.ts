@@ -1,11 +1,11 @@
 // Build icons
-import './build-iconify'
+import "./build-iconify";
 
 // Build teh application
 await Bun.build({
-  outdir: "./bundle",
-  entrypoints: ["./src/index.html"],
-  minify: true
+    outdir: "./bundle",
+    entrypoints: ["./src/index.html"],
+    minify: true
 });
 
-console.log("Build complete!")
+console.log("Build complete!");
